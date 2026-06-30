@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Moon, Sun, Menu, X, LogOut, User } from "lucide-react";
 import { useTodoStore } from "./store/todoStore";
-import { Task, MainView } from "./types";
+import { Task, MainView, Priority, TaskStatus } from "./types";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Card, CardContent } from "./components/ui/card";
 import { TaskDetailDialog } from "./components/TaskDetailDialog";
+import { ConfirmDialog } from "./components/ui/confirm-dialog";
 import { BoardView } from "./components/BoardView";
 import { CalendarView } from "./components/CalendarView";
 import { SettingsDialog } from "./components/SettingsDialog";
@@ -50,10 +51,13 @@ function App() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   // User auth state
   interface UserInfo { id: string; email: string; name: string; }
@@ -66,18 +70,42 @@ function App() {
     return null;
   });
 
-  const { getFilteredTasks, searchQuery, setSearchQuery, mainView, reorderTasks, isTrashView, setMainView } = useTodoStore();
+  const { getFilteredTasks, searchQuery, setSearchQuery, mainView, reorderTasks, isTrashView, setMainView, addTask, currentCategoryId } = useTodoStore();
   const filteredTasks = getFilteredTasks();
 
   const greeting = getGreeting();
+
+  // 主题持久化 & html class
+  useEffect(() => {
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDark]);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setIsDetailDialogOpen(true);
   };
 
-  const handleDateClick = (_date: Date) => {
-    // TODO: Implement date click handler for adding tasks to specific dates
+  const handleDateClick = (date: Date) => {
+    // 切换到任务视图，并创建一个到期日为该日期的新任务
+    setMainView(MainView.TASK);
+    addTask({
+      title: "新任务",
+      completed: false,
+      priority: Priority.NONE,
+      status: TaskStatus.TODO,
+      listId: "all",
+      categoryId: currentCategoryId || undefined,
+      tags: [],
+      subTasks: [],
+      reminders: [],
+      order: 0,
+      dueDate: date,
+    });
   };
 
   const sensors = useSensors(
@@ -115,7 +143,7 @@ function App() {
   }
 
   return (
-    <div className={cn("h-screen w-screen flex flex-col overflow-hidden", isDark && "dark")}>
+    <div className={cn("h-screen h-dvh w-screen flex flex-col overflow-hidden", isDark && "dark")}>
       {/* 顶部 Tab 导航 */}
       <header className="flex-shrink-0 px-4 sm:px-6 py-4 bg-background border-b border-border/50">
         <div className="flex items-center justify-between">
@@ -158,11 +186,7 @@ function App() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => {
-                    localStorage.removeItem("auth_token");
-                    localStorage.removeItem("user_info");
-                    setUserInfo(null);
-                  }}
+                  onClick={() => setIsLogoutConfirmOpen(true)}
                   className="h-10 w-10 rounded-lg hover:bg-accent transition-colors cursor-pointer"
                   title="退出登录"
                 >
@@ -205,48 +229,45 @@ function App() {
         <main className="flex-1 flex flex-col bg-background overflow-hidden">
           {/* 欢迎区域 - 仅在任务视图显示 */}
           {mainView === MainView.TASK && (
-            <>
-              <div className="flex-shrink-0 px-6 sm:px-8 pt-6 pb-4">
-                <div className="max-w-4xl 2xl:max-w-6xl">
-                  <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-1 text-foreground">
-                    {greeting}
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    今天是 {new Date().toLocaleDateString("zh-CN", { weekday: "long", month: "long", day: "numeric" })}
-                  </p>
-                </div>
+            <div className="flex-shrink-0 px-6 sm:px-8 pt-6 pb-4">
+              <div className="max-w-4xl 2xl:max-w-6xl">
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-1 text-foreground">
+                  {greeting}
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  今天是 {new Date().toLocaleDateString("zh-CN", { weekday: "long", month: "long", day: "numeric" })}
+                </p>
               </div>
-
-              {/* 搜索和操作栏 */}
-              <div className="flex-shrink-0 px-6 sm:px-8 pb-4">
-                <div className="max-w-4xl 2xl:max-w-6xl flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={isTrashView ? "搜索已删除的任务..." : "搜索任务..."}
-                      className="pl-10 h-10"
-                    />
-                  </div>
-                  {!isTrashView && (
-                    <Button
-                      onClick={() => setIsAddDialogOpen(true)}
-                      className="gap-2 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <Plus className="w-4 h-4 text-current" />
-                      添加任务
-                    </Button>
-                  )}
-                  {isTrashView && (
-                    <div className="text-sm text-muted-foreground px-2">
-                      {filteredTasks.length} 个已删除的任务
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
+            </div>
           )}
+
+          {/* 搜索和操作栏 - 在所有视图显示 */}
+          <div className="flex-shrink-0 px-6 sm:px-8 pt-4 pb-4">
+            <div className="max-w-4xl 2xl:max-w-6xl flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={mainView === MainView.TASK ? (isTrashView ? "搜索已删除的任务..." : "搜索任务...") : "搜索任务..."}
+                  className="pl-10 h-10"
+                />
+              </div>
+              {mainView === MainView.TASK && isTrashView ? (
+                <div className="text-sm text-muted-foreground px-2">
+                  {filteredTasks.length} 个已删除的任务
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="gap-2 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <Plus className="w-4 h-4 text-current" />
+                  添加任务
+                </Button>
+              )}
+            </div>
+          </div>
 
           {/* 视图内容 */}
           <div className="flex-1 overflow-hidden">
@@ -344,6 +365,20 @@ function App() {
         onLoginSuccess={(user) => {
           setUserInfo(user);
           setIsLoginOpen(false);
+        }}
+      />
+
+      <ConfirmDialog
+        open={isLogoutConfirmOpen}
+        onOpenChange={setIsLogoutConfirmOpen}
+        title="退出登录"
+        description="确定要退出登录吗？"
+        confirmLabel="退出"
+        variant="danger"
+        onConfirm={() => {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("user_info");
+          setUserInfo(null);
         }}
       />
     </div>

@@ -8,6 +8,7 @@ import { Textarea } from "./ui/textarea";
 import { Select } from "./ui/select";
 import { Checkbox } from "./ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "./ui/dialog";
+import { ConfirmDialog } from "./ui/confirm-dialog";
 import { DatePicker } from "./ui/date-picker";
 import { cn } from "../lib/utils";
 import { TAG_COLORS } from "../lib/icons";
@@ -19,7 +20,7 @@ interface TaskDetailDialogProps {
 }
 
 export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProps) {
-  const { updateTask, categories, tags: storeTags, addTag } = useTodoStore();
+  const { updateTask, permanentlyDeleteTask, categories, tags: storeTags, addTag } = useTodoStore();
 
   // 表单状态
   const [title, setTitle] = useState("");
@@ -35,6 +36,10 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
+
+  // 删除确认
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "task" } | { type: "subtask"; id: string } | { type: "reminder"; id: string } | null>(null);
 
   // 初始化表单
   useEffect(() => {
@@ -124,13 +129,30 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
   };
 
   const deleteSubTask = (id: string) => {
-    setSubTasks(subTasks.filter((st) => st.id !== id));
+    setDeleteTarget({ type: "subtask", id });
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === "task") {
+      permanentlyDeleteTask(task!.id);
+      onClose();
+    } else if (deleteTarget.type === "subtask") {
+      setSubTasks(subTasks.filter((st) => st.id !== deleteTarget.id));
+    } else if (deleteTarget.type === "reminder") {
+      setReminders(reminders.filter((r) => r.id !== deleteTarget.id));
+    }
+    setDeleteTarget(null);
   };
 
   const addReminder = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
     const newReminder: Reminder = {
       id: crypto.randomUUID(),
-      date: new Date(),
+      date: tomorrow,
       repeat: "none",
       enabled: true,
     };
@@ -144,7 +166,8 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
   };
 
   const deleteReminder = (id: string) => {
-    setReminders(reminders.filter((r) => r.id !== id));
+    setDeleteTarget({ type: "reminder", id });
+    setIsDeleteConfirmOpen(true);
   };
 
   const priorityOptions = [
@@ -170,6 +193,19 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
         </DialogHeader>
 
         <DialogClose onClick={onClose} />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setDeleteTarget({ type: "task" });
+            setIsDeleteConfirmOpen(true);
+          }}
+          className="absolute top-3 right-12 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+          title="删除任务"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
 
         <div className="space-y-6">
           {/* 标题 */}
@@ -441,6 +477,28 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
           <Button onClick={handleSave}>保存</Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        title={
+          deleteTarget?.type === "task"
+            ? "删除任务"
+            : deleteTarget?.type === "subtask"
+            ? "删除子任务"
+            : "删除提醒"
+        }
+        description={
+          deleteTarget?.type === "task"
+            ? "确定要永久删除这个任务吗？此操作不可撤销。"
+            : deleteTarget?.type === "subtask"
+            ? "确定要删除这个子任务吗？"
+            : "确定要删除这个提醒吗？"
+        }
+        confirmLabel="删除"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </Dialog>
   );
 }
