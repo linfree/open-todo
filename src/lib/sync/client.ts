@@ -3,6 +3,7 @@ export interface SyncRecord {
   record_id: string;
   action: string;
   timestamp: string;
+  data?: any;
 }
 
 interface PullResponse {

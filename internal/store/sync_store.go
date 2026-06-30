@@ -74,3 +74,21 @@ func (s *Store) GetFullRecord(tableName, recordID string) (json.RawMessage, erro
 	}
 	return nil, fmt.Errorf("GetFullRecord: unknown table %s", tableName)
 }
+
+func (s *Store) PutFullRecord(tableName, recordID string, data json.RawMessage) error {
+	switch tableName {
+	case "tasks":
+		var t Task
+		if err := json.Unmarshal(data, &t); err != nil {
+			return fmt.Errorf("PutFullRecord decode: %w", err)
+		}
+		return s.SaveTask(&t)
+	case "lists":
+		var l TaskList
+		if err := json.Unmarshal(data, &l); err != nil {
+			return fmt.Errorf("PutFullRecord decode: %w", err)
+		}
+		return s.SaveList(&l)
+	}
+	return fmt.Errorf("PutFullRecord: unknown table %s", tableName)
+}

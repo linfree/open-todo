@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -25,7 +26,6 @@ func NewEngine(st *store.Store, serverURL, token string) *Engine {
 
 func (e *Engine) Start() {
 	log.Println("[sync] engine started")
-
 	go e.pushLoop()
 	go e.pullLoop()
 }
@@ -37,7 +37,6 @@ func (e *Engine) Stop() {
 func (e *Engine) pushLoop() {
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
-
 	for {
 		select {
 		case <-e.stopCh:
@@ -49,12 +48,9 @@ func (e *Engine) pushLoop() {
 }
 
 func (e *Engine) pullLoop() {
-	// 启动时立即拉取
 	e.doPull()
-
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-
 	for {
 		select {
 		case <-e.stopCh:
@@ -113,14 +109,36 @@ func (e *Engine) doPull() {
 		return
 	}
 
+	merged := 0
 	for _, c := range resp.Changes {
-		// TODO Phase 4: LWW merge into local DB
-		log.Printf("[sync] pulled %s/%s", c.TableName, c.RecordID)
+		localData, _ := e.store.GetFullRecord(c.TableName, c.RecordID)
+		shouldWrite := len(localData) == 0
+
+		if !shouldWrite && len(c.Data) > 0 {
+			remoteTime, err1 := time.Parse(time.RFC3339, c.Timestamp)
+			var localObj map[string]interface{}
+			if err2 := json.Unmarshal(localData, &localObj); err2 == nil {
+				if updatedAt, ok := localObj["updated_at"].(string); ok {
+					localTime, err3 := time.Parse(time.RFC3339, updatedAt)
+					if err1 == nil && err3 == nil && !remoteTime.Before(localTime) {
+						shouldWrite = true
+					}
+				}
+			}
+		}
+
+		if shouldWrite && len(c.Data) > 0 {
+			if err := e.store.PutFullRecord(c.TableName, c.RecordID, c.Data); err != nil {
+				log.Printf("[sync] merge error %s/%s: %v", c.TableName, c.RecordID, err)
+				continue
+			}
+			merged++
+		}
 	}
 
 	if t, err := time.Parse(time.RFC3339, resp.ServerTime); err == nil {
 		e.lastSync = t
 	}
 
-	log.Printf("[sync] pulled %d changes", len(resp.Changes))
+	log.Printf("[sync] pulled %d changes, merged %d", len(resp.Changes), merged)
 }
