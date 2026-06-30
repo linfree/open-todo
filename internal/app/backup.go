@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/linfree/open-todo/internal/store"
@@ -37,7 +38,8 @@ func BackupToWebDAV(st *store.Store, cfg WebDAVConfig) (string, error) {
 	w.Close()
 
 	filename := fmt.Sprintf("open-todo-%s.zip", time.Now().UTC().Format("20060102-150405"))
-	url := fmt.Sprintf("%s/%s", cfg.URL, filename)
+	baseURL := strings.TrimRight(cfg.URL, "/")
+	url := fmt.Sprintf("%s/%s", baseURL, filename)
 
 	req, err := http.NewRequest("PUT", url, &buf)
 	if err != nil {
@@ -60,7 +62,8 @@ func BackupToWebDAV(st *store.Store, cfg WebDAVConfig) (string, error) {
 }
 
 func RestoreFromWebDAV(st *store.Store, cfg WebDAVConfig, filename string) error {
-	url := fmt.Sprintf("%s/%s", cfg.URL, filename)
+	baseURL := strings.TrimRight(cfg.URL, "/")
+	url := fmt.Sprintf("%s/%s", baseURL, filename)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(cfg.Username, cfg.Password)
 

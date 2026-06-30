@@ -24,11 +24,9 @@ func (s *Store) GetUnsyncedChanges() ([]ChangeRecord, error) {
 	var changes []ChangeRecord
 	for rows.Next() {
 		var c ChangeRecord
-		var synced int
 		if err := rows.Scan(&c.ID, &c.TableName, &c.RecordID, &c.Action, &c.Timestamp); err != nil {
 			return nil, err
 		}
-		c.Synced = synced != 0
 		changes = append(changes, c)
 	}
 	if changes == nil {

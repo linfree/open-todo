@@ -51,14 +51,22 @@ func RunMigrations(db *sql.DB) error {
 		if m.Version <= currentVersion {
 			continue
 		}
+		tx, err := db.Begin()
+		if err != nil {
+			return fmt.Errorf("begin tx v%d: %w", m.Version, err)
+		}
 		for _, s := range m.SQL {
-			if _, err := db.Exec(s); err != nil {
+			if _, err := tx.Exec(s); err != nil {
+				tx.Rollback()
 				return fmt.Errorf("migration v%d: %w", m.Version, err)
 			}
 		}
-		_, err := db.Exec(fmt.Sprintf("PRAGMA user_version = %d", m.Version))
-		if err != nil {
+		if _, err := tx.Exec(fmt.Sprintf("PRAGMA user_version = %d", m.Version)); err != nil {
+			tx.Rollback()
 			return fmt.Errorf("set version v%d: %w", m.Version, err)
+		}
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("commit v%d: %w", m.Version, err)
 		}
 	}
 	return nil
