@@ -18,7 +18,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { cn } from "../../lib/utils";
-import { webdavApi, WebDavSettings, isTauri } from "../../lib/api";
+import { webdavApi, WebDavSettings, isDesktop as checkIsDesktop } from "../../lib/api";
 import { webApiService, syncManager } from "../../lib/webapi";
 
 export function DataSettings() {
@@ -222,7 +222,7 @@ function BackupPanel() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    setIsDesktop(isTauri());
+    setIsDesktop(checkIsDesktop());
     webdavApi.loadSettings().then(s => s && setSettings(s));
   }, []);
 

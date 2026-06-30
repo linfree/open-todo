@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Bell, Save, TestTube, Check, X, AlertCircle } from "lucide-react";
+import { Bell, TestTube, Check, X, AlertCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
-import { notificationApi, NotificationSettings as NotificationSettingsType, isTauri } from "../../lib/api";
+import { notificationApi, NotificationSettings as NotificationSettingsType, isDesktop as checkIsDesktop } from "../../lib/api";
 
 export function NotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettingsType>({
@@ -16,7 +16,7 @@ export function NotificationSettings() {
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    setIsDesktop(isTauri());
+    setIsDesktop(checkIsDesktop());
     loadSettings();
     checkPermission();
   }, []);

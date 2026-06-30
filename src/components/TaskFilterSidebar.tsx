@@ -10,14 +10,10 @@ import {
   Tag,
   X,
   Settings,
-  Bell,
-  Database,
 } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { cn } from "../lib/utils";
 import { getCategoryIcon, getRandomTagColor } from "../lib/icons";
-import { Cloud } from "lucide-react";
-
 interface TaskFilterSidebarProps {
   className?: string;
   isOpen?: boolean;
