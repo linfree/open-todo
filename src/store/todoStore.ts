@@ -138,13 +138,24 @@ export const useTodoStore = create<TodoStore>()(
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        set((state) => {
-          // 异步保存到后端，不阻塞 UI
-          databaseApi.saveTask(newTask).catch((error) => {
+        // 先乐观更新 UI
+        set((state) => ({
+          tasks: [...state.tasks, newTask],
+        }));
+        // 异步保存到后端，保存成功后用返回的 server 数据更新 timestamps
+        databaseApi.saveTask(newTask)
+          .then((saved) => {
+            set((state) => ({
+              tasks: state.tasks.map((t) =>
+                t.id === saved.id
+                  ? { ...t, createdAt: saved.createdAt, updatedAt: saved.updatedAt }
+                  : t
+              ),
+            }));
+          })
+          .catch((error) => {
             console.error("[Store] Failed to save task to backend:", error);
           });
-          return { tasks: [...state.tasks, newTask] };
-        });
       },
 
       updateTask: (id, updates) => {
@@ -158,10 +169,20 @@ export const useTodoStore = create<TodoStore>()(
           // 找到被更新的任务并保存到后端
           const updatedTask = updatedTasks.find((t) => t.id === id);
           if (updatedTask) {
-            // 异步保存到后端，不阻塞 UI
-            databaseApi.saveTask(updatedTask).catch((error) => {
-              console.error("[Store] Failed to save task to backend:", error);
-            });
+            // 异步保存到后端，保存成功后用返回的 server 数据更新 timestamps
+            databaseApi.saveTask(updatedTask)
+              .then((saved) => {
+                set((state) => ({
+                  tasks: state.tasks.map((t) =>
+                    t.id === saved.id
+                      ? { ...t, createdAt: saved.createdAt, updatedAt: saved.updatedAt }
+                      : t
+                  ),
+                }));
+              })
+              .catch((error) => {
+                console.error("[Store] Failed to save task to backend:", error);
+              });
           }
 
           return { tasks: updatedTasks };
