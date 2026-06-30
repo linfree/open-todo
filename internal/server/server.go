@@ -16,6 +16,7 @@ func New(st *store.Store, cfg *config.Config) *gin.Engine {
 	apiGroup := r.Group("/api/v1")
 	api.RegisterTaskRoutes(apiGroup, st)
 	api.RegisterListRoutes(apiGroup, st)
+	api.RegisterBackupRoutes(apiGroup, st)
 
 	return r
 }
