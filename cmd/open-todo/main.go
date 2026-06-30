@@ -11,6 +11,7 @@ import (
 	"github.com/linfree/open-todo/internal/config"
 	"github.com/linfree/open-todo/internal/server"
 	"github.com/linfree/open-todo/internal/store"
+	"github.com/linfree/open-todo/internal/sync"
 	"github.com/linfree/open-todo/internal/ui"
 )
 
@@ -28,6 +29,13 @@ func main() {
 
 	if err := st.InitDefaults(); err != nil {
 		log.Printf("init defaults: %v", err)
+	}
+
+	// 启动 SyncEngine (如果配置了服务端)
+	if cfg.ServerURL != "" && cfg.AuthToken != "" {
+		engine := sync.NewEngine(st, cfg.ServerURL, cfg.AuthToken)
+		engine.Start()
+		defer engine.Stop()
 	}
 
 	router := server.New(st, cfg)
