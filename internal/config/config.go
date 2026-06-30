@@ -17,7 +17,7 @@ type Config struct {
 func Default() *Config {
 	home, _ := os.UserHomeDir()
 	return &Config{
-		Port:         18080,
+		Port:         25080,
 		AutoSync:     false,
 		DatabasePath: filepath.Join(home, ".open-todo", "open-todo.db"),
 	}
