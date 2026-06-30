@@ -1,10 +1,12 @@
 import Dexie, { type Table } from 'dexie';
-import type { DatabaseAdapter, Task, TaskList, ChangeRecord } from './types';
+import type { DatabaseAdapter, Task, TaskList, Category, Tag, ChangeRecord } from './types';
 import { v4 as uuid } from './uuid';
 
 class TodoDB extends Dexie {
   tasks!: Table<Task>;
   lists!: Table<TaskList>;
+  categories!: Table<Category>;
+  tags!: Table<Tag>;
   syncLog!: Table<ChangeRecord>;
 
   constructor() {
@@ -13,6 +15,10 @@ class TodoDB extends Dexie {
       tasks: 'id, user_id, list_id, updated_at, [user_id+list_id]',
       lists: 'id, user_id, updated_at',
       syncLog: '++id, table_name, record_id, synced, timestamp',
+    });
+    this.version(2).stores({
+      categories: 'id, user_id, updated_at',
+      tags: 'id, user_id',
     });
   }
 }
@@ -87,6 +93,43 @@ export class DexieAdapter implements DatabaseAdapter {
 
   async deleteList(id: string): Promise<void> {
     await db.lists.delete(id);
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return db.categories.toArray();
+  }
+
+  async saveCategory(cat: Category): Promise<Category> {
+    const c = {
+      ...cat,
+      id: cat.id || uuid(),
+      created_at: cat.created_at || now(),
+      updated_at: now(),
+    };
+    await db.categories.put(c);
+    return c;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.categories.delete(id);
+  }
+
+  async getTags(): Promise<Tag[]> {
+    return db.tags.toArray();
+  }
+
+  async saveTag(tag: Tag): Promise<Tag> {
+    const t = {
+      ...tag,
+      id: tag.id || uuid(),
+      created_at: tag.created_at || now(),
+    };
+    await db.tags.put(t);
+    return t;
+  }
+
+  async deleteTag(id: string): Promise<void> {
+    await db.tags.delete(id);
   }
 
   async getUnsyncedChanges(): Promise<ChangeRecord[]> {

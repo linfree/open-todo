@@ -1,4 +1,4 @@
-import type { DatabaseAdapter, Task, TaskList, ChangeRecord } from './types';
+import type { DatabaseAdapter, Task, TaskList, Category, Tag, ChangeRecord } from './types';
 
 const BASE = ''; // 同源, 用相对路径
 
@@ -47,6 +47,48 @@ export class GoDesktopAdapter implements DatabaseAdapter {
   async deleteList(id: string): Promise<void> {
     const res = await fetch(`${BASE}/api/v1/lists/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(`deleteList: ${res.status}`);
+  }
+
+  async getCategories(): Promise<Category[]> {
+    const res = await fetch(`${BASE}/api/v1/categories`);
+    if (!res.ok) throw new Error(`getCategories: ${res.status}`);
+    return res.json();
+  }
+
+  async saveCategory(cat: Category): Promise<Category> {
+    const res = await fetch(`${BASE}/api/v1/categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cat),
+    });
+    if (!res.ok) throw new Error(`saveCategory: ${res.status}`);
+    return res.json();
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    const res = await fetch(`${BASE}/api/v1/categories/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`deleteCategory: ${res.status}`);
+  }
+
+  async getTags(): Promise<Tag[]> {
+    const res = await fetch(`${BASE}/api/v1/tags`);
+    if (!res.ok) throw new Error(`getTags: ${res.status}`);
+    return res.json();
+  }
+
+  async saveTag(tag: Tag): Promise<Tag> {
+    const res = await fetch(`${BASE}/api/v1/tags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tag),
+    });
+    if (!res.ok) throw new Error(`saveTag: ${res.status}`);
+    return res.json();
+  }
+
+  async deleteTag(id: string): Promise<void> {
+    const res = await fetch(`${BASE}/api/v1/tags/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`deleteTag: ${res.status}`);
   }
 
   async getUnsyncedChanges(): Promise<ChangeRecord[]> {

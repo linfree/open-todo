@@ -29,6 +29,25 @@ export interface TaskList {
   updated_at: string;
 }
 
+export interface Category {
+  id: string;
+  user_id?: string;
+  name: string;
+  icon?: string;
+  color: string;
+  order_num: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Tag {
+  id: string;
+  user_id?: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
 export interface ChangeRecord {
   id: number;
   table_name: string;
@@ -46,6 +65,12 @@ export interface DatabaseAdapter {
   getLists(): Promise<TaskList[]>;
   saveList(list: TaskList): Promise<TaskList>;
   deleteList(id: string): Promise<void>;
+  getCategories(): Promise<Category[]>;
+  saveCategory(cat: Category): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
+  getTags(): Promise<Tag[]>;
+  saveTag(tag: Tag): Promise<Tag>;
+  deleteTag(id: string): Promise<void>;
   getUnsyncedChanges(): Promise<ChangeRecord[]>;
   markChangesSynced(changes: ChangeRecord[]): Promise<void>;
 }
