@@ -9,7 +9,7 @@ import (
 	"github.com/linfree/open-todo/server/internal/middleware"
 )
 
-func New(db *database.DB, jwtSecret string) *gin.Engine {
+func New(db database.Database, jwtSecret string) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())

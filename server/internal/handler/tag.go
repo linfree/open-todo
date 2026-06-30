@@ -8,7 +8,7 @@ import (
 )
 
 type TagHandler struct {
-	DB *database.DB
+	DB database.Database
 }
 
 func (h *TagHandler) GetTags(c *gin.Context) {

@@ -12,7 +12,7 @@ import (
 )
 
 type AuthHandler struct {
-	DB        *database.DB
+	DB        database.Database
 	JWTSecret string
 }
 

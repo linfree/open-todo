@@ -10,7 +10,7 @@ import (
 
 func main() {
 	cfg := config.Load()
-	db, err := database.Open(cfg.Driver, cfg.DSN)
+	db, err := database.New(cfg.Driver, cfg.DSN)
 	if err != nil {
 		log.Fatalf("database: %v", err)
 	}

@@ -8,11 +8,11 @@ type Category = database.Category
 // Tag is re-exported from database package.
 type Tag = database.Tag
 
-// Store wraps the database.DB for category/tag operations.
+// Store wraps the database.Database for category/tag operations.
 type Store struct {
-	DB *database.DB
+	DB database.Database
 }
 
-func New(db *database.DB) *Store {
+func New(db database.Database) *Store {
 	return &Store{DB: db}
 }

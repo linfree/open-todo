@@ -15,9 +15,9 @@ import (
 
 const testJWTSecret = "test-sync-secret"
 
-func setupSyncUser(t *testing.T) (*database.DB, string) {
+func setupSyncUser(t *testing.T) (database.Database, string) {
 	t.Helper()
-	db, err := database.Open("sqlite", ":memory:")
+	db, err := database.New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("failed to open test db: %v", err)
 	}

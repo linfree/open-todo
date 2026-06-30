@@ -5,7 +5,7 @@ import (
 )
 
 func TestCategoryCRUD(t *testing.T) {
-	db, err := Open("sqlite", ":memory:")
+	db, err := New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestCategoryCRUD(t *testing.T) {
 }
 
 func TestTagCRUD(t *testing.T) {
-	db, err := Open("sqlite", ":memory:")
+	db, err := New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestTagCRUD(t *testing.T) {
 }
 
 func TestGetCategoriesEmpty(t *testing.T) {
-	db, err := Open("sqlite", ":memory:")
+	db, err := New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestGetCategoriesEmpty(t *testing.T) {
 }
 
 func TestGetTagsEmpty(t *testing.T) {
-	db, err := Open("sqlite", ":memory:")
+	db, err := New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}

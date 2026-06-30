@@ -8,7 +8,7 @@ import (
 )
 
 type CategoryHandler struct {
-	DB *database.DB
+	DB database.Database
 }
 
 func (h *CategoryHandler) GetCategories(c *gin.Context) {

@@ -11,9 +11,9 @@ import (
 	"github.com/linfree/open-todo/server/internal/database"
 )
 
-func setupAuthHandler(t *testing.T) (*AuthHandler, *database.DB) {
+func setupAuthHandler(t *testing.T) (*AuthHandler, database.Database) {
 	t.Helper()
-	db, err := database.Open("sqlite", ":memory:")
+	db, err := database.New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("failed to open test db: %v", err)
 	}

@@ -8,7 +8,7 @@ import (
 
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
-	db, err := database.Open("sqlite", ":memory:")
+	db, err := database.New("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
@@ -25,14 +25,14 @@ func TestStoreCategoryCRUD(t *testing.T) {
 		Color:    "#ff0000",
 		OrderNum: 0,
 	}
-	if err := s.SaveCategory(cat); err != nil {
+	if err := s.DB.SaveCategory(cat); err != nil {
 		t.Fatalf("save category: %v", err)
 	}
 	if cat.ID == "" {
 		t.Fatal("expected non-empty ID")
 	}
 
-	cats, err := s.GetCategories("test-user")
+	cats, err := s.DB.GetCategories("test-user")
 	if err != nil {
 		t.Fatalf("get categories: %v", err)
 	}
@@ -44,18 +44,18 @@ func TestStoreCategoryCRUD(t *testing.T) {
 	}
 
 	cat.Name = "Personal"
-	if err := s.SaveCategory(cat); err != nil {
+	if err := s.DB.SaveCategory(cat); err != nil {
 		t.Fatalf("update category: %v", err)
 	}
-	cats, _ = s.GetCategories("test-user")
+	cats, _ = s.DB.GetCategories("test-user")
 	if cats[0].Name != "Personal" {
 		t.Fatalf("expected updated name 'Personal', got '%s'", cats[0].Name)
 	}
 
-	if err := s.DeleteCategory(cat.ID); err != nil {
+	if err := s.DB.DeleteCategory(cat.ID); err != nil {
 		t.Fatalf("delete category: %v", err)
 	}
-	cats, _ = s.GetCategories("test-user")
+	cats, _ = s.DB.GetCategories("test-user")
 	if len(cats) != 0 {
 		t.Fatalf("expected 0 categories after delete, got %d", len(cats))
 	}
@@ -69,14 +69,14 @@ func TestStoreTagCRUD(t *testing.T) {
 		Name:   "urgent",
 		Color:  "#ff0000",
 	}
-	if err := s.SaveTag(tag); err != nil {
+	if err := s.DB.SaveTag(tag); err != nil {
 		t.Fatalf("save tag: %v", err)
 	}
 	if tag.ID == "" {
 		t.Fatal("expected non-empty ID")
 	}
 
-	tags, err := s.GetTags("test-user")
+	tags, err := s.DB.GetTags("test-user")
 	if err != nil {
 		t.Fatalf("get tags: %v", err)
 	}
@@ -88,18 +88,18 @@ func TestStoreTagCRUD(t *testing.T) {
 	}
 
 	tag.Name = "important"
-	if err := s.SaveTag(tag); err != nil {
+	if err := s.DB.SaveTag(tag); err != nil {
 		t.Fatalf("update tag: %v", err)
 	}
-	tags, _ = s.GetTags("test-user")
+	tags, _ = s.DB.GetTags("test-user")
 	if tags[0].Name != "important" {
 		t.Fatalf("expected updated name 'important', got '%s'", tags[0].Name)
 	}
 
-	if err := s.DeleteTag(tag.ID); err != nil {
+	if err := s.DB.DeleteTag(tag.ID); err != nil {
 		t.Fatalf("delete tag: %v", err)
 	}
-	tags, _ = s.GetTags("test-user")
+	tags, _ = s.DB.GetTags("test-user")
 	if len(tags) != 0 {
 		t.Fatalf("expected 0 tags after delete, got %d", len(tags))
 	}
@@ -107,7 +107,7 @@ func TestStoreTagCRUD(t *testing.T) {
 
 func TestStoreGetCategoriesEmpty(t *testing.T) {
 	s := newTestStore(t)
-	cats, err := s.GetCategories("nonexistent")
+	cats, err := s.DB.GetCategories("nonexistent")
 	if err != nil {
 		t.Fatalf("get categories: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestStoreGetCategoriesEmpty(t *testing.T) {
 
 func TestStoreGetTagsEmpty(t *testing.T) {
 	s := newTestStore(t)
-	tags, err := s.GetTags("nonexistent")
+	tags, err := s.DB.GetTags("nonexistent")
 	if err != nil {
 		t.Fatalf("get tags: %v", err)
 	}

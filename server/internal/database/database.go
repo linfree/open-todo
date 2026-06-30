@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-
-	_ "modernc.org/sqlite"
 )
 
+// User represents a registered user account.
 type User struct {
 	ID        string `json:"id"`
 	Email     string `json:"email"`
@@ -17,6 +16,7 @@ type User struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+// SyncRecord is a single change from a client to be applied or replicated.
 type SyncRecord struct {
 	TableName string          `json:"table_name"`
 	RecordID  string          `json:"record_id"`
@@ -25,64 +25,100 @@ type SyncRecord struct {
 	Data      json.RawMessage `json:"data,omitempty"`
 }
 
-type DB struct {
-	db *sql.DB
+// Database is the shared interface implemented by every backend.
+type Database interface {
+	CreateUser(u *User) (*User, error)
+	GetUserByEmail(email string) (*User, error)
+	GetUserByID(id string) (*User, error)
+
+	StoreChanges(userID string, changes []SyncRecord) error
+	GetChangesSince(userID string, since any /* time.Time */) ([]SyncRecord, error)
+
+	GetCategories(userID string) ([]Category, error)
+	SaveCategory(c *Category) error
+	DeleteCategory(id string) error
+
+	GetTags(userID string) ([]Tag, error)
+	SaveTag(t *Tag) error
+	DeleteTag(id string) error
+
+	Migrate() error
+	CleanupDeleted() error
+	Close() error
 }
 
-func Open(driver, dsn string) (*DB, error) {
-	db, err := sql.Open(driver, dsn+"?_journal_mode=WAL")
+// New opens the database described by driver/DSN and returns its
+// Database handle.  Supported drivers: "sqlite", "postgres".
+func New(driver, dsn string) (Database, error) {
+	switch driver {
+	case "sqlite":
+		return newSQLite(dsn)
+	case "postgres":
+		return newPostgres(dsn)
+	default:
+		return nil, fmt.Errorf("database: unsupported driver %q", driver)
+	}
+}
+
+// openAndMigrate is a small helper used by backend constructors so
+// they can keep the same error-handling shape.
+func openAndMigrate(driverName, dsn string, migrate func(*sql.DB) error) (*sql.DB, error) {
+	db, err := sql.Open(driverName, dsn)
 	if err != nil {
 		return nil, err
 	}
-	db.SetMaxOpenConns(1)
 	if err := migrate(db); err != nil {
+		db.Close()
 		return nil, err
 	}
-	return &DB{db: db}, nil
+	return db, nil
 }
 
-func (d *DB) Close() error { return d.db.Close() }
+// ---------- helpers shared by all backends ----------
 
-func migrate(db *sql.DB) error {
-	sqls := []string{
-		`CREATE TABLE IF NOT EXISTS users (
-			id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL DEFAULT '',
-			password TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS lists (
-			id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL,
-			icon TEXT, color TEXT, order_num INTEGER DEFAULT 0,
-			created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS tasks (
-			id TEXT PRIMARY KEY, user_id TEXT NOT NULL, title TEXT NOT NULL,
-			description TEXT, completed INTEGER DEFAULT 0, priority TEXT DEFAULT 'none',
-			status TEXT DEFAULT 'todo', list_id TEXT NOT NULL, tags TEXT DEFAULT '[]',
-			sub_tasks TEXT DEFAULT '[]', reminders TEXT DEFAULT '[]', due_date TEXT,
-			deleted INTEGER DEFAULT 0, deleted_at TEXT, order_num INTEGER DEFAULT 0,
-			created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_server_tasks_user ON tasks(user_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_server_tasks_updated ON tasks(updated_at)`,
-		`CREATE TABLE IF NOT EXISTS categories (
-			id TEXT PRIMARY KEY, user_id TEXT NOT NULL DEFAULT '',
-			name TEXT NOT NULL, icon TEXT, color TEXT NOT NULL DEFAULT '#6b7280',
-			order_num INTEGER NOT NULL DEFAULT 0,
-			created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id)`,
-		`CREATE TABLE IF NOT EXISTS tags (
-			id TEXT PRIMARY KEY, user_id TEXT NOT NULL DEFAULT '',
-			name TEXT NOT NULL, color TEXT NOT NULL DEFAULT '#3b82f6',
-			created_at TEXT NOT NULL
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id)`,
-	}
-	for _, s := range sqls {
-		if _, err := db.Exec(s); err != nil {
-			return fmt.Errorf("migrate: %w\nSQL: %s", err, s)
-		}
-	}
-	return nil
+type taskPayload struct {
+	ID          string  `json:"id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description"`
+	Completed   bool    `json:"completed"`
+	Priority    string  `json:"priority"`
+	Status      string  `json:"status"`
+	ListID      string  `json:"list_id"`
+	Tags        string  `json:"tags"`
+	SubTasks    string  `json:"sub_tasks"`
+	Reminders   string  `json:"reminders"`
+	DueDate     *string `json:"due_date"`
+	Deleted     bool    `json:"deleted"`
+	DeletedAt   *string `json:"deleted_at"`
+	OrderNum    int     `json:"order_num"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
 }
 
+func taskDefaults(p *taskPayload) {
+	if p.Title == "" {
+		p.Title = ""
+	}
+	if p.Priority == "" {
+		p.Priority = "none"
+	}
+	if p.Status == "" {
+		p.Status = "todo"
+	}
+	if p.Tags == "" {
+		p.Tags = "[]"
+	}
+	if p.SubTasks == "" {
+		p.SubTasks = "[]"
+	}
+	if p.Reminders == "" {
+		p.Reminders = "[]"
+	}
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}

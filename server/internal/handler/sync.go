@@ -9,7 +9,7 @@ import (
 )
 
 type SyncHandler struct {
-	DB *database.DB
+	DB database.Database
 }
 
 func (h *SyncHandler) Push(c *gin.Context) {
