@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./dialog";
+import { Button } from "./button";
+import { Input } from "./input";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -30,25 +32,18 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant={variant === "danger" ? "destructive" : "default"}
             onClick={() => {
               onConfirm();
               onOpenChange(false);
             }}
-            className={
-              variant === "danger"
-                ? "px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-                : "px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            }
           >
             {confirmLabel}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -84,12 +79,11 @@ export function InputDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <input
+        <Input
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           autoFocus
           onKeyDown={(e) => {
             if (e.key === "Enter" && value.trim()) {
@@ -99,24 +93,21 @@ export function InputDialog({
           }}
         />
         <DialogFooter>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors"
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="default"
+            disabled={!value.trim()}
             onClick={() => {
               if (value.trim()) {
                 onConfirm(value.trim());
                 onOpenChange(false);
               }
             }}
-            disabled={!value.trim()}
-            className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {confirmLabel}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
