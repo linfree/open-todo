@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Moon, Sun, Menu, X } from "lucide-react";
+import { Plus, Search, Moon, Sun, Menu, X, LogOut, User } from "lucide-react";
 import { useTodoStore } from "./store/todoStore";
 import { Task, MainView } from "./types";
 import { Button } from "./components/ui/button";
@@ -9,6 +9,7 @@ import { TaskDetailDialog } from "./components/TaskDetailDialog";
 import { BoardView } from "./components/BoardView";
 import { CalendarView } from "./components/CalendarView";
 import { SettingsDialog } from "./components/SettingsDialog";
+import { LoginDialog } from "./components/LoginDialog";
 import { TaskFilterSidebar } from "./components/TaskFilterSidebar";
 import { TopTabBar } from "./components/TopTabBar";
 import { SortableTaskItem } from "./components/SortableTaskItem";
@@ -52,6 +53,18 @@ function App() {
   const [isDark, setIsDark] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  // User auth state
+  interface UserInfo { id: string; email: string; name: string; }
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(() => {
+    try {
+      const stored = localStorage.getItem("user_info");
+      const token = localStorage.getItem("auth_token");
+      if (stored && token) return JSON.parse(stored);
+    } catch { /* ignore */ }
+    return null;
+  });
 
   const { getFilteredTasks, searchQuery, setSearchQuery, mainView, reorderTasks, isTrashView, setMainView } = useTodoStore();
   const filteredTasks = getFilteredTasks();
@@ -135,6 +148,37 @@ function App() {
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
+            {/* Login / User status */}
+            {userInfo ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-sm text-muted-foreground max-w-[120px] truncate" title={userInfo.email}>
+                  <User className="w-3.5 h-3.5 inline mr-1" />
+                  {userInfo.name || userInfo.email}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    localStorage.removeItem("auth_token");
+                    localStorage.removeItem("user_info");
+                    setUserInfo(null);
+                  }}
+                  className="h-10 w-10 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                  title="退出登录"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsLoginOpen(true)}
+                className="h-10 rounded-lg hover:bg-accent transition-colors cursor-pointer text-sm"
+              >
+                登录
+              </Button>
+            )}
           </div>
         </div>
         {/* 移动端 - 底部 TabBar (固定定位，由 TopTabBar 组件处理) */}
@@ -292,6 +336,15 @@ function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         initialTab={settingsTab}
+      />
+
+      <LoginDialog
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLoginSuccess={(user) => {
+          setUserInfo(user);
+          setIsLoginOpen(false);
+        }}
       />
     </div>
   );
