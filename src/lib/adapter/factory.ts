@@ -1,14 +1,24 @@
 import type { DatabaseAdapter } from './types';
 import { GoDesktopAdapter } from './GoDesktopAdapter';
+import { DexieAdapter } from './DexieAdapter';
 
 let cached: DatabaseAdapter | null = null;
+
+function isGoDesktop(): boolean {
+  // 检测是否连接了 Go Gin 后端
+  // 在桌面环境下, Go Gin 服务运行在 localhost
+  const url = new URL(window.location.href);
+  return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+}
 
 export function createAdapter(): DatabaseAdapter {
   if (cached) return cached;
 
-  // 检测是否在 Go 桌面环境 (访问同一来源的 Gin 服务器)
-  // PWA 模式下不走这个 adapter
-  cached = new GoDesktopAdapter();
+  if (isGoDesktop()) {
+    cached = new GoDesktopAdapter();
+  } else {
+    cached = new DexieAdapter();
+  }
   return cached;
 }
 
