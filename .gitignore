@@ -41,6 +41,9 @@ Desktop.ini
 *.dylib
 *.a
 
+# Go build artifacts
+bin/
+
 # Environment files
 .env
 .env.local
