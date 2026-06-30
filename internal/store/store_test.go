@@ -69,3 +69,29 @@ func TestGetUnsyncedChanges(t *testing.T) {
 		t.Errorf("table = %s, want tasks", changes[0].TableName)
 	}
 }
+
+func TestInitDefaults(t *testing.T) {
+	s := setupStore(t)
+	defer s.Close()
+
+	s.InitDefaults()
+	lists, _ := s.GetLists()
+	if len(lists) != 3 {
+		t.Errorf("expected 3 default lists, got %d", len(lists))
+	}
+}
+
+func TestReminderSent(t *testing.T) {
+	s := setupStore(t)
+	defer s.Close()
+
+	s.MarkReminderSent("", "task-1", 100, "{}")
+	sent, _ := s.IsReminderSent("task-1", 100)
+	if !sent {
+		t.Error("expected reminder to be sent")
+	}
+	notSent, _ := s.IsReminderSent("task-1", 200)
+	if notSent {
+		t.Error("expected reminder not sent for different time")
+	}
+}
