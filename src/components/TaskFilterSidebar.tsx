@@ -10,6 +10,7 @@ import {
   Tag,
   X,
   Settings,
+  LayoutList,
 } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { cn } from "../lib/utils";
@@ -76,6 +77,7 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
     if (node.type === "filter") {
       if (node.filterType === "today") return currentListId === "today";
       if (node.filterType === "week") return currentListId === "week";
+      if (node.filterType === "all") return currentListId === null && currentCategoryId === null && currentTagId === null && !isTrashView;
     }
     if (node.type === "category") return currentCategoryId === node.categoryId && currentListId === null;
     if (node.type === "tag") return currentTagId === node.tagId && currentListId === null;
@@ -95,6 +97,9 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
       } else if (node.filterType === "week") {
         // 最近7天视图 - 使用 listId
         setCurrentList("week");
+      } else if (node.filterType === "all") {
+        // 全部任务 - 清除所有过滤
+        setCurrentList(null);
       }
     } else if (node.type === "category") {
       setCurrentCategory(node.categoryId!);
@@ -114,7 +119,7 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
     label: string;
     icon?: React.ReactNode;
     type: "filter" | "category" | "categories" | "tags" | "trash" | "tag" | "section-header";
-    filterType?: "today" | "week";
+    filterType?: "today" | "week" | "all";
     categoryId?: string;
     tagId?: string;
     count?: number;
@@ -129,6 +134,14 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
       label: "",
       type: "section-header",
       children: [
+        {
+          id: "all",
+          label: "全部任务",
+          type: "filter",
+          filterType: "all",
+          icon: <LayoutList className="w-4 h-4" />,
+          count: 0,
+        },
         {
           id: "today",
           label: "今天",
@@ -332,7 +345,7 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
                 e.stopPropagation();
                 handleDeleteCategory(node.categoryId!, node.label);
               }}
-              className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-60 hover:opacity-100 text-current"
+              className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-colors opacity-60 group-hover:opacity-100 text-current"
               title="删除分类"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -345,7 +358,7 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
                 e.stopPropagation();
                 handleDeleteTag(node.tagId!, node.label);
               }}
-              className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-60 hover:opacity-100 text-current"
+              className="p-1 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-colors opacity-60 group-hover:opacity-100 text-current"
               title="删除标签"
             >
               <Trash2 className="w-3.5 h-3.5" />

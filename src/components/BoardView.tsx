@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -113,6 +113,7 @@ export function BoardView({ onTaskClick }: BoardViewProps) {
                 column={column}
                 tasks={columnTasks}
                 onTaskClick={onTaskClick}
+                isAnyDragging={activeId !== null}
               />
             );
           })}
@@ -137,10 +138,12 @@ interface BoardColumnProps {
   };
   tasks: Task[];
   onTaskClick: (task: Task) => void;
+  isAnyDragging?: boolean;
 }
 
-function BoardColumn({ column, tasks, onTaskClick }: BoardColumnProps) {
+function BoardColumn({ column, tasks, onTaskClick, isAnyDragging = false }: BoardColumnProps) {
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
   const { addTask, currentCategoryId, currentListId } = useTodoStore();
 
   // 创建列的放置区域
@@ -148,30 +151,39 @@ function BoardColumn({ column, tasks, onTaskClick }: BoardColumnProps) {
     id: `column-${column.id}`,
   });
 
-  const handleAddTask = () => {
-    if (isAddingTask) {
-      addTask({
-        title: "新任务",
-        completed: false,
-        priority: Priority.NONE,
-        status: column.status,
-        listId: currentListId || "all",
-        categoryId: currentCategoryId || undefined,
-        tags: [],
-        subTasks: [],
-        reminders: [],
-        order: 0,
-      });
-      setIsAddingTask(false);
-    } else {
-      setIsAddingTask(true);
-    }
+  const handleConfirmAdd = () => {
+    const title = newTaskTitle.trim();
+    if (!title) return;
+    addTask({
+      title,
+      completed: false,
+      priority: Priority.NONE,
+      status: column.status,
+      listId: currentListId || "all",
+      categoryId: currentCategoryId || undefined,
+      tags: [],
+      subTasks: [],
+      reminders: [],
+      order: 0,
+    });
+    setNewTaskTitle("");
+    setIsAddingTask(false);
+  };
+
+  const handleCancelAdd = () => {
+    setNewTaskTitle("");
+    setIsAddingTask(false);
   };
 
   return (
     <div
       ref={setNodeRef}
-      className="flex-shrink-0 w-full md:flex-1 md:min-w-[260px] flex flex-col bg-muted/40 rounded-xl border border-border/50"
+      className={cn(
+        "flex-shrink-0 w-full md:flex-1 md:min-w-[260px] flex flex-col rounded-xl border transition-colors duration-200",
+        isAnyDragging
+          ? "bg-primary/10 border-primary/30"
+          : "bg-muted/40 border-border/50"
+      )}
     >
       {/* 列头 */}
       <div className="p-3 sm:p-4 border-b border-border/50">
@@ -189,7 +201,7 @@ function BoardColumn({ column, tasks, onTaskClick }: BoardColumnProps) {
         <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3 min-h-[150px] md:min-h-[200px]">
           {tasks.length === 0 && !isAddingTask ? (
             <div className="text-center py-6 sm:py-8 text-muted-foreground/70 text-xs sm:text-sm">
-              拖放任务到这里
+              {isAnyDragging ? "拖放到此处" : "拖放任务到这里"}
             </div>
           ) : (
             tasks.map((task) => (
@@ -203,17 +215,56 @@ function BoardColumn({ column, tasks, onTaskClick }: BoardColumnProps) {
         </div>
       </SortableContext>
 
-      {/* 添加任务按钮 */}
+      {/* 添加任务按钮 / 输入框 */}
       <div className="p-2 sm:p-3 border-t border-border/50">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer text-sm sm:text-base"
-          size="sm"
-          onClick={handleAddTask}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {isAddingTask ? "确认添加" : "添加任务"}
-        </Button>
+        {isAddingTask ? (
+          <div className="space-y-2">
+            <input
+              autoFocus
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleConfirmAdd();
+                } else if (e.key === "Escape") {
+                  handleCancelAdd();
+                }
+              }}
+              placeholder="输入任务标题..."
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={handleConfirmAdd}
+                disabled={!newTaskTitle.trim()}
+                className="text-xs sm:text-sm"
+              >
+                确认添加
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelAdd}
+                className="text-xs sm:text-sm"
+              >
+                取消
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer text-sm sm:text-base"
+            size="sm"
+            onClick={() => setIsAddingTask(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            添加任务
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -262,7 +313,19 @@ interface TaskCardProps {
 
 function TaskCard({ task, onClick, isDragging, dragHandleProps }: TaskCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { updateTask } = useTodoStore();
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu]);
 
   return (
     <Card
@@ -295,7 +358,7 @@ function TaskCard({ task, onClick, isDragging, dragHandleProps }: TaskCardProps)
                   <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                 </button>
                 {showMenu && (
-                  <div className="absolute right-0 top-8 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[100px] sm:min-w-[120px] z-10">
+                  <div ref={menuRef} className="absolute right-0 top-8 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[100px] sm:min-w-[120px] z-10">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

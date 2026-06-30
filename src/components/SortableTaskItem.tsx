@@ -44,11 +44,6 @@ export function SortableTaskItem({ task, onClick, onReminderClick, isTrashView }
     setShowDeleteConfirm(true);
   }
 
-  function handleToggleComplete(e: React.MouseEvent) {
-    e.stopPropagation();
-    toggleTaskComplete(task.id);
-  }
-
   function getPriorityLabel() {
     switch (task.priority) {
       case "high":
@@ -97,21 +92,26 @@ export function SortableTaskItem({ task, onClick, onReminderClick, isTrashView }
             >
               <GripVertical className="w-4 h-4" />
             </button>
-            <button
-              onClick={handleToggleComplete}
+            <input
+              type="checkbox"
+              checked={task.completed}
+              onChange={(e) => {
+                e.stopPropagation();
+                toggleTaskComplete(task.id);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              aria-checked={task.completed}
               className={cn(
-                "mt-0.5 w-5 h-5 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0",
+                "mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 cursor-pointer appearance-none transition-all duration-200 bg-center bg-no-repeat",
                 task.completed
                   ? "bg-primary border-primary"
-                  : "border-muted-foreground/30 hover:border-primary hover:scale-110 active:scale-95"
+                  : "border-muted-foreground/30 hover:border-primary hover:scale-110 active:scale-95",
               )}
-            >
-              {task.completed && (
-                <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </button>
+              style={task.completed ? {
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E")`,
+                backgroundSize: '0.75rem 0.75rem',
+              } : {}}
+            />
           </>
         )}
 
