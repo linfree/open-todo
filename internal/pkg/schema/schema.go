@@ -5,10 +5,12 @@ const TableLists = "lists"
 const TableUsers = "users"
 const TableSentReminders = "sent_reminders"
 const TableSyncLog = "sync_log"
+const TableCategories = "categories"
+const TableTags = "tags"
 
-var Tables = []string{TableUsers, TableLists, TableTasks, TableSentReminders, TableSyncLog}
+var Tables = []string{TableUsers, TableLists, TableTasks, TableSentReminders, TableSyncLog, TableCategories, TableTags}
 
-const CurrentVersion = 1
+const CurrentVersion = 2
 
 var CreateTablesSQL = []string{
 	`CREATE TABLE IF NOT EXISTS users (
@@ -70,4 +72,23 @@ var CreateTablesSQL = []string{
 		synced INTEGER NOT NULL DEFAULT 0
 	)`,
 	`CREATE INDEX IF NOT EXISTS idx_sync_log_synced ON sync_log(synced)`,
+	`CREATE TABLE IF NOT EXISTS categories (
+		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL DEFAULT '',
+		name TEXT NOT NULL,
+		icon TEXT,
+		color TEXT NOT NULL DEFAULT '#6b7280',
+		order_num INTEGER NOT NULL DEFAULT 0,
+		created_at TEXT NOT NULL,
+		updated_at TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id)`,
+	`CREATE TABLE IF NOT EXISTS tags (
+		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL DEFAULT '',
+		name TEXT NOT NULL,
+		color TEXT NOT NULL DEFAULT '#3b82f6',
+		created_at TEXT NOT NULL
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id)`,
 }

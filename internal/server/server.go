@@ -17,6 +17,8 @@ func New(st *store.Store, cfg *config.Config) *gin.Engine {
 	api.RegisterTaskRoutes(apiGroup, st)
 	api.RegisterListRoutes(apiGroup, st)
 	api.RegisterBackupRoutes(apiGroup, st)
+	api.RegisterCategoryRoutes(apiGroup, st)
+	api.RegisterTagRoutes(apiGroup, st)
 
 	return r
 }

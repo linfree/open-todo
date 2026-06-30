@@ -12,6 +12,27 @@ type Migration struct {
 
 var Migrations = []Migration{
 	{Version: 1, SQL: CreateTablesSQL},
+	{Version: 2, SQL: []string{
+		`CREATE TABLE IF NOT EXISTS categories (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL DEFAULT '',
+			name TEXT NOT NULL,
+			icon TEXT,
+			color TEXT NOT NULL DEFAULT '#6b7280',
+			order_num INTEGER NOT NULL DEFAULT 0,
+			created_at TEXT NOT NULL,
+			updated_at TEXT NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id)`,
+		`CREATE TABLE IF NOT EXISTS tags (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL DEFAULT '',
+			name TEXT NOT NULL,
+			color TEXT NOT NULL DEFAULT '#3b82f6',
+			created_at TEXT NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id)`,
+	}},
 }
 
 func RunMigrations(db *sql.DB) error {

@@ -27,20 +27,28 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	hash, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
+		return
+	}
 	now := time.Now().UTC().Format(time.RFC3339)
 	user := &database.User{
 		ID: uuid.New().String(), Email: req.Email, Name: req.Name,
 		Password: string(hash), CreatedAt: now, UpdatedAt: now,
 	}
 
-	_, err := h.DB.CreateUser(user)
+	_, err = h.DB.CreateUser(user)
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "user already exists"})
 		return
 	}
 
-	token, _ := h.generateToken(user.ID)
+	token, err := h.generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		return
+	}
 	c.JSON(http.StatusCreated, gin.H{"user": user, "token": token})
 }
 
@@ -64,7 +72,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, _ := h.generateToken(user.ID)
+	token, err := h.generateToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"user": user, "token": token})
 }
 
