@@ -59,9 +59,9 @@ export function SettingsDialog({ isOpen, onClose, initialTab = "data" }: Setting
             <SettingsIcon className="w-5 h-5" />
             <span className="font-semibold">设置中心</span>
             {/* 移动端关闭按钮 */}
-            <button 
+            <button
               onClick={onClose}
-              className="ml-auto md:hidden text-muted-foreground p-1"
+              className="ml-auto md:hidden text-muted-foreground p-2"
             >
               <span className="sr-only">关闭</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>

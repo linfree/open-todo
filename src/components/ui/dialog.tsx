@@ -105,7 +105,7 @@ const DialogClose = ({
 }) => (
   <button
     onClick={onClick}
-    className="absolute right-4 top-4 rounded-lg opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none p-1 cursor-pointer text-foreground hover:text-accent-foreground"
+    className="absolute right-4 top-4 rounded-lg opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none p-2 cursor-pointer text-foreground hover:text-accent-foreground"
   >
     <X className="h-4 w-4" />
     <span className="sr-only">Close</span>

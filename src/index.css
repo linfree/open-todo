@@ -64,6 +64,8 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     touch-action: manipulation;
+    /* 防止移动端下拉刷新 / 边缘回弹 */
+    overscroll-behavior: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -122,6 +124,7 @@
   .scroll-container {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    overscroll-behavior: contain;
   }
 }
 
@@ -130,4 +133,40 @@ button,
 a,
 [role="button"] {
   touch-action: manipulation;
+}
+
+/* === PWA Touch Optimization Enhancements === */
+
+/* 触控设备专用：提升所有输入控件的最小触摸目标 */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
+/* 安全区：内容不被刘海/指示条遮挡 */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* 确保固定底部的元素也遵守安全区（如移动端底部导航栏） */
+.fixed-bottom-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+/* 禁止文本选择，提升触控体验 */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 更明显的触摸反馈悬停态（适配无鼠标触屏） */
+@media (hover: none) {
+  .hover\:bg-accent:hover {
+    background-color: hsl(var(--accent) / 0.6);
+  }
 }

@@ -52,7 +52,7 @@ export function TopTabBar({ currentView, onViewChange }: TopTabBarProps) {
                 key={tab.id}
                 onClick={() => onViewChange(tab.id)}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1",
+                  "flex flex-col items-center gap-1 px-4 py-2 min-h-[48px] rounded-lg transition-all duration-200 min-w-0 flex-1",
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"

@@ -112,7 +112,7 @@ function App() {
               variant="ghost"
               size="icon"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="md:hidden h-9 w-9 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+              className="md:hidden h-10 w-10 rounded-lg hover:bg-accent transition-colors cursor-pointer"
               aria-label="Toggle sidebar"
             >
               {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -130,7 +130,7 @@ function App() {
               variant="ghost"
               size="icon"
               onClick={() => setIsDark(!isDark)}
-              className="h-9 w-9 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+              className="h-10 w-10 rounded-lg hover:bg-accent transition-colors cursor-pointer"
               title={isDark ? "切换到浅色模式" : "切换到深色模式"}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
