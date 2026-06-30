@@ -29,7 +29,7 @@ func configDir() (string, error) {
 		return "", err
 	}
 	dir := filepath.Join(home, ".open-todo")
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", err
 	}
 	return dir, nil
@@ -47,7 +47,7 @@ func Load() (*Config, error) {
 	cfg := Default()
 	path, err := configPath()
 	if err != nil {
-		return cfg, nil
+		return cfg, err
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -56,7 +56,9 @@ func Load() (*Config, error) {
 		}
 		return cfg, err
 	}
-	json.Unmarshal(data, cfg)
+	if err := json.Unmarshal(data, cfg); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
 }
 
