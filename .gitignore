@@ -12,9 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Tauri specific
-src-tauri/target
-src-tauri/Cargo.lock
 *.exe.manifest
 
 # Settings files

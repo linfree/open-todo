@@ -5,12 +5,10 @@ import type { Task as AdapterTask, TaskList as AdapterTaskList } from './adapter
 
 const adapter: DatabaseAdapter = createAdapter();
 
-// Environment detection — replaces the old isTauri() check.
-// In the Go desktop wrapper, the Go backend serves the frontend
-// and sets window.__GO_DESKTOP__ as a signal.
+// Environment detection — the Go backend sets window.__GO_DESKTOP__.
 export function isDesktop(): boolean {
   try {
-    return !!(window as any).__GO_DESKTOP__ || !!(window as any).__TAURI__ || !!(window as any).__TAURI_INTERNALS__;
+    return !!(window as any).__GO_DESKTOP__;
   } catch {
     return false;
   }
