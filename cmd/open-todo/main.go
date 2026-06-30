@@ -31,7 +31,6 @@ func main() {
 		log.Printf("init defaults: %v", err)
 	}
 
-	// 启动 SyncEngine (如果配置了服务端)
 	if cfg.ServerURL != "" && cfg.AuthToken != "" {
 		engine := sync.NewEngine(st, cfg.ServerURL, cfg.AuthToken)
 		engine.Start()
@@ -69,5 +68,6 @@ func main() {
 		log.Println("UI ready")
 	})
 
-	select {}
+	log.Println("UI exited, shutting down...")
+	listener.Close()
 }
