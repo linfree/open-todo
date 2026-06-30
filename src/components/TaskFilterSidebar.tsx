@@ -14,6 +14,7 @@ import {
 import { useTodoStore } from "../store/todoStore";
 import { cn } from "../lib/utils";
 import { getCategoryIcon, getRandomTagColor } from "../lib/icons";
+import { ConfirmDialog, InputDialog } from "./ui/confirm-dialog";
 interface TaskFilterSidebarProps {
   className?: string;
   isOpen?: boolean;
@@ -45,6 +46,12 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
     new Set(["quick-access", "categories-section", "tags-section"])
   );
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean; title: string; description: string; onConfirm: () => void;
+  }>({ open: false, title: "", description: "", onConfirm: () => {} });
+  const [inputDialog, setInputDialog] = useState<{
+    open: boolean; title: string; placeholder: string; onConfirm: (value: string) => void;
+  }>({ open: false, title: "", placeholder: "", onConfirm: () => {} });
 
   const deletedTasksCount = getDeletedTasks().length;
 
@@ -191,37 +198,48 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
   ];
 
   function handleAddCategory() {
-    const name = prompt("请输入分类名称：");
-    if (name && name.trim()) {
-      addCategory({
-        name: name.trim(),
-        icon: "Folder",
-        color: "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0"),
-        order: categories.length,
-      });
-    }
+    setInputDialog({
+      open: true,
+      title: "添加分类",
+      placeholder: "请输入分类名称",
+      onConfirm: (name) => {
+        addCategory({
+          name,
+          icon: "Folder",
+          color: "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0"),
+          order: categories.length,
+        });
+      },
+    });
   }
 
   function handleDeleteCategory(categoryId: string, categoryName: string) {
-    if (confirm(`确定要删除分类"${categoryName}"吗？相关任务将移至收集箱。`)) {
-      deleteCategory(categoryId);
-    }
+    setConfirmDialog({
+      open: true,
+      title: "删除分类",
+      description: `确定要删除分类"${categoryName}"吗？相关任务将移至收集箱。`,
+      onConfirm: () => deleteCategory(categoryId),
+    });
   }
 
   function handleAddTag() {
-    const name = prompt("请输入标签名称：");
-    if (name && name.trim()) {
-      addTag({
-        name: name.trim(),
-        color: getRandomTagColor(),
-      });
-    }
+    setInputDialog({
+      open: true,
+      title: "添加标签",
+      placeholder: "请输入标签名称",
+      onConfirm: (name) => {
+        addTag({ name, color: getRandomTagColor() });
+      },
+    });
   }
 
   function handleDeleteTag(tagId: string, tagName: string) {
-    if (confirm(`确定要删除标签"${tagName}"吗？此操作将从所有任务中移除该标签。`)) {
-      deleteTag(tagId);
-    }
+    setConfirmDialog({
+      open: true,
+      title: "删除标签",
+      description: `确定要删除标签"${tagName}"吗？此操作将从所有任务中移除该标签。`,
+      onConfirm: () => deleteTag(tagId),
+    });
   }
 
   const renderNode = (node: TreeNode, level: number = 0): React.ReactNode => {
@@ -394,6 +412,22 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
           </button>
         </div>
       </aside>
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant="danger"
+        onConfirm={confirmDialog.onConfirm}
+      />
+      <InputDialog
+        open={inputDialog.open}
+        onOpenChange={(open) => setInputDialog((prev) => ({ ...prev, open }))}
+        title={inputDialog.title}
+        placeholder={inputDialog.placeholder}
+        onConfirm={inputDialog.onConfirm}
+      />
     </>
   );
 }

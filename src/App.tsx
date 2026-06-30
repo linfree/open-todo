@@ -207,7 +207,7 @@ function App() {
           {mainView === MainView.TASK && (
             <>
               <div className="flex-shrink-0 px-6 sm:px-8 pt-6 pb-4">
-                <div className="max-w-4xl">
+                <div className="max-w-4xl 2xl:max-w-6xl">
                   <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-1 text-foreground">
                     {greeting}
                   </h2>
@@ -219,7 +219,7 @@ function App() {
 
               {/* 搜索和操作栏 */}
               <div className="flex-shrink-0 px-6 sm:px-8 pb-4">
-                <div className="max-w-4xl flex items-center gap-3">
+                <div className="max-w-4xl 2xl:max-w-6xl flex items-center gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <Input
@@ -259,7 +259,7 @@ function App() {
                 onDragEnd={handleDragEnd}
               >
                 <div className="h-full overflow-y-auto px-6 sm:px-8 pb-8">
-                  <div className="max-w-4xl">
+                  <div className="max-w-4xl 2xl:max-w-6xl">
                     {filteredTasks.length === 0 ? (
                       <Card className="border-dashed border-2 border-border/50">
                         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -294,7 +294,7 @@ function App() {
                 </div>
                 <DragOverlay>
                   {activeId ? (
-                    <div className="w-full max-w-4xl mx-6 sm:mx-8 opacity-50">
+                    <div className="w-full max-w-4xl 2xl:max-w-6xl mx-6 sm:mx-8 opacity-50">
                       <div className="bg-card border border-border rounded-xl p-4 shadow-lg">
                         {filteredTasks.find((t) => t.id === activeId)?.title}
                       </div>

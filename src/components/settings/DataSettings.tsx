@@ -1,25 +1,18 @@
 import { useState, useEffect } from "react";
-import { 
-  Server, 
-  Database, 
-  Cloud, 
-  Check, 
-  X, 
-  Loader2, 
-  TestTube,
+import {
+  Database,
+  Cloud,
+  Check,
+  X,
   UploadCloud,
   FolderDown,
-  RefreshCw,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Badge } from "../ui/badge";
 import { cn } from "../../lib/utils";
+import { InputDialog } from "../ui/confirm-dialog";
 import { webdavApi, WebDavSettings, isDesktop as checkIsDesktop } from "../../lib/api";
-import { webApiService, syncManager } from "../../lib/webapi";
 
 export function DataSettings() {
   return (
@@ -41,15 +34,6 @@ export function DataSettings() {
           <BackupPanel />
         </section>
 
-        {/* API Sync (Secondary) */}
-        <section className="space-y-4 pt-4 border-t">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Server className="w-5 h-5" />
-            <h3 className="font-semibold text-base">自定义 API 服务</h3>
-          </div>
-          <SyncPanel />
-        </section>
-
         {/* Local Storage */}
         <section className="space-y-4 pt-4 border-t">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -59,150 +43,6 @@ export function DataSettings() {
           <StoragePanel />
         </section>
       </div>
-    </div>
-  );
-}
-
-function SyncPanel() {
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [apiUrl, setApiUrl] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [syncStatus, setSyncStatus] = useState<{ lastSync: string | null; isConfigured: boolean }>({ lastSync: null, isConfigured: false });
-
-  useEffect(() => {
-    const config = webApiService.getConfig();
-    if (config) {
-      setIsEnabled(true);
-      setIsExpanded(true); // 如果已配置，自动展开
-      setApiUrl(config.baseUrl);
-      setApiKey(config.apiKey || "");
-    }
-    setSyncStatus(syncManager.getStatus());
-  }, []);
-
-  const handleTestConnection = async () => {
-    if (!apiUrl) {
-      setTestResult({ success: false, message: "请输入 API 地址" });
-      return;
-    }
-    setIsTesting(true);
-    setTestResult(null);
-    try {
-      webApiService.configure({ baseUrl: apiUrl, apiKey });
-      const result = await webApiService.testConnection();
-      if (result.success) {
-        setTestResult({ success: true, message: "连接成功" });
-      } else {
-        setTestResult({ success: false, message: result.error || "连接失败" });
-      }
-    } catch (error) {
-      setTestResult({ success: false, message: error instanceof Error ? error.message : "未知错误" });
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
-  const handleSave = () => {
-    if (isEnabled && apiUrl) {
-      webApiService.configure({ baseUrl: apiUrl, apiKey });
-      syncManager.initialize();
-      setTestResult({ success: true, message: "配置已保存" });
-    } else {
-      webApiService.clearConfig();
-      syncManager.stopAutoSync();
-      setIsEnabled(false);
-      setTestResult({ success: true, message: "同步已禁用" });
-    }
-    setTimeout(() => setTestResult(null), 2000);
-  };
-
-  const handleSyncNow = async () => {
-    await syncManager.sync();
-    setSyncStatus(syncManager.getStatus());
-  };
-
-  return (
-    <div className="space-y-4">
-      <div 
-        className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div>
-          <h3 className="font-medium text-sm sm:text-base">启用 API 同步服务</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">连接自建服务器进行实时数据同步</p>
-        </div>
-        <div className="flex items-center gap-3">
-           <div onClick={(e) => e.stopPropagation()}>
-            <input
-                type="checkbox"
-                className="toggle"
-                checked={isEnabled}
-                onChange={(e) => {
-                  setIsEnabled(e.target.checked);
-                  if (e.target.checked) setIsExpanded(true);
-                  if (!e.target.checked) handleSave();
-                }}
-                style={{ width: '2.5rem', height: '1.5rem' }} 
-              />
-           </div>
-           {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="p-4 border rounded-lg space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="grid gap-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">API 地址</label>
-              <Input 
-                value={apiUrl} 
-                onChange={(e) => setApiUrl(e.target.value)} 
-                placeholder="https://api.example.com" 
-                className="font-mono text-sm"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">API 密钥（可选）</label>
-              <Input 
-                type="password" 
-                value={apiKey} 
-                onChange={(e) => setApiKey(e.target.value)} 
-                placeholder="输入 API 密钥" 
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button onClick={handleSave} size="sm" className="flex-1 sm:flex-none">保存配置</Button>
-              <Button variant="outline" size="sm" onClick={handleTestConnection} disabled={isTesting || !apiUrl} className="flex-1 sm:flex-none">
-                {isTesting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <TestTube className="w-4 h-4 mr-2" />}
-                测试
-              </Button>
-            </div>
-            {testResult && (
-              <Badge variant={testResult.success ? "success" : "destructive"} className="gap-1 w-full sm:w-auto justify-center sm:justify-start">
-                {testResult.success ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                {testResult.message}
-              </Badge>
-            )}
-          </div>
-
-          {syncStatus.isConfigured && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t gap-3">
-              <div className="text-sm text-muted-foreground">
-                {syncStatus.lastSync ? `上次同步: ${new Date(syncStatus.lastSync).toLocaleString()}` : "尚未同步"}
-              </div>
-              <Button variant="outline" size="sm" onClick={handleSyncNow} className="w-full sm:w-auto">
-                <RefreshCw className="w-4 h-4 mr-2" /> 立即同步
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -220,6 +60,7 @@ function BackupPanel() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [restoreInput, setRestoreInput] = useState(false);
 
   useEffect(() => {
     setIsDesktop(checkIsDesktop());
@@ -256,8 +97,10 @@ function BackupPanel() {
   };
 
   const handleRestore = async () => {
-    const filename = prompt("输入要恢复的备份文件名：");
-    if (!filename) return;
+    setRestoreInput(true);
+  };
+
+  const doRestore = async (filename: string) => {
     setIsLoading(true);
     try {
       await webdavApi.restore(filename);
@@ -272,6 +115,7 @@ function BackupPanel() {
   };
 
   return (
+    <>
     <div className="space-y-4">
       {!isDesktop && (
         <div className="text-sm p-3 rounded bg-amber-500/10 border border-amber-500/20 text-amber-700">
@@ -364,6 +208,15 @@ function BackupPanel() {
         </div>
       )}
     </div>
+      <InputDialog
+        open={restoreInput}
+        onOpenChange={setRestoreInput}
+        title="恢复备份"
+        placeholder="输入要恢复的备份文件名"
+        confirmLabel="恢复"
+        onConfirm={doRestore}
+      />
+    </>
   );
 }
 
@@ -387,9 +240,7 @@ function StoragePanel() {
           <AlertTriangle className="w-4 h-4" /> 危险区域
         </h3>
         <div className="mt-3">
-            <Button variant="destructive" size="sm" onClick={() => alert("请手动删除数据文件以重置。")} className="w-full sm:w-auto">
-            清空所有数据
-            </Button>
+            <p className="text-xs text-muted-foreground">请手动删除 ~/.open-todo/open-todo.db 以重置数据。</p>
         </div>
       </div>
     </div>

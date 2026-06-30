@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Bell, Calendar, GripVertical, RotateCcw, Trash2 } from "lucide-react";
@@ -6,6 +7,7 @@ import { Task } from "../types";
 import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
 import { PRIORITY_COLORS } from "../lib/icons";
+import { ConfirmDialog } from "./ui/confirm-dialog";
 
 interface SortableTaskItemProps {
   task: Task;
@@ -25,6 +27,7 @@ export function SortableTaskItem({ task, onClick, onReminderClick, isTrashView }
   } = useSortable({ id: task.id });
 
   const { toggleTaskComplete, restoreTask, permanentlyDeleteTask } = useTodoStore();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -38,9 +41,7 @@ export function SortableTaskItem({ task, onClick, onReminderClick, isTrashView }
 
   function handlePermanentDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (confirm("确定要永久删除此任务吗？此操作无法撤销。")) {
-      permanentlyDeleteTask(task.id);
-    }
+    setShowDeleteConfirm(true);
   }
 
   function handleToggleComplete(e: React.MouseEvent) {
@@ -167,6 +168,17 @@ export function SortableTaskItem({ task, onClick, onReminderClick, isTrashView }
           </Badge>
         )}
       </div>
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          title="永久删除任务"
+          description="确定要永久删除此任务吗？此操作无法撤销。"
+          variant="danger"
+          confirmLabel="删除"
+          onConfirm={() => permanentlyDeleteTask(task.id)}
+        />
+      )}
     </div>
   );
 }
