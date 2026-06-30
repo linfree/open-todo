@@ -11,6 +11,7 @@ import (
 	"github.com/linfree/open-todo/internal/config"
 	"github.com/linfree/open-todo/internal/server"
 	"github.com/linfree/open-todo/internal/store"
+	"github.com/linfree/open-todo/internal/ui"
 )
 
 func main() {
@@ -49,7 +50,16 @@ func main() {
 		listener.Close()
 	}()
 
-	if err := router.RunListener(listener); err != nil {
-		log.Printf("server: %v", err)
-	}
+	go func() {
+		if err := router.RunListener(listener); err != nil {
+			log.Printf("server: %v", err)
+		}
+	}()
+
+	uiApp := ui.New(cfg.Port)
+	uiApp.Run(func() {
+		log.Println("UI ready")
+	})
+
+	select {}
 }
