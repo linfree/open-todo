@@ -1,142 +1,138 @@
-# My TODO
+# Open Todo
 
-一个基于 Tauri + React + TypeScript 构建的跨平台桌面待办事项应用。
+一个基于 Go + React + TypeScript 构建的跨平台待办事项应用。桌面端使用 Go + WebView，移动端使用 PWA，支持自建服务端同步。
 
 ## 功能特性
 
 - **多视图支持**
   - 看板视图：拖拽式任务管理
   - 日历视图：按日期查看和管理任务
+  - 列表视图：传统任务列表
 
 - **任务管理**
-  - 创建、编辑、删除任务
-  - 任务优先级设置（高、中、低）
-  - 任务分类管理
-  - 任务完成状态追踪
-  - 拖拽排序任务
+  - 创建、编辑、软删除任务
+  - 任务优先级（紧急/高/中/低）
+  - 任务标签和分类
+  - 子任务和提醒
+  - 拖拽排序
 
 - **筛选与搜索**
-  - 按优先级筛选
-  - 按分类筛选
-  - 按完成状态筛选
+  - 按优先级、标签、状态筛选
   - 关键词搜索
 
 - **数据存储**
-  - SQLite 本地数据库存储
-  - 可选的云端 API 同步
+  - 本地 SQLite 数据库（桌面端）
+  - IndexedDB 本地存储（PWA 移动端）
+  - 可选服务端同步（多设备）
+
+- **备份**
+  - WebDAV 自动/手动备份
+
+## 架构
+
+```
+Go 桌面 ←─ SyncEngine ──→ Go 服务端 ←─ Sync ──→ PWA 移动端
+   │                         │                     │
+ SQLite                    SQLite              IndexedDB
+```
 
 ## 技术栈
 
 ### 前端
-- **React 19** - UI 框架
-- **TypeScript** - 类型安全
-- **Vite** - 构建工具
-- **Tailwind CSS** - 样式框架
-- **Zustand** - 状态管理
-- **React Datepicker** - 日期选择
-- **Lucide React** - 图标库
-- **@dnd-kit** - 拖拽功能
+- React 19 + TypeScript
+- Vite + Tailwind CSS
+- Zustand（状态管理）
+- Dexie.js（PWA 本地数据库）
+- PWA（vite-plugin-pwa + Service Worker）
 
 ### 后端
-- **Tauri 2** - 桌面应用框架
-- **Rust** - 后端逻辑
-- **SQLite (better-sqlite3)** - 数据库
+- Go + Gin（HTTP 服务）
+- modernc.org/sqlite（纯 Go SQLite，零 CGo）
+- systray（跨平台系统托盘）
 
-## 开发环境
+### 服务端（可选）
+- Go + Gin
+- JWT 认证
+- SQLite / PostgreSQL
 
-### 推荐的 IDE 设置
+## 环境要求
 
-- [VS Code](https://code.visualstudio.com/)
-- [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) 插件
-- [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) 插件
+- Go >= 1.24
+- Node.js >= 18
+- pnpm
 
-### 环境要求
-
-- **Node.js** >= 18
-- **pnpm** (推荐) 或 npm/yarn
-- **Rust** >= 1.70
-- **系统依赖**
-  - Windows: 无额外要求
-  - Linux: 查看 [Tauri 文档](https://tauri.app/v1/guides/getting-started/prerequisites)
-  - macOS: Xcode 命令行工具
-
-## 安装
+## 快速开始
 
 ```bash
-# 克隆仓库
-git clone https://github.com/linfree/my-todo.git
-cd my-todo
-
-# 安装依赖
+# 安装前端依赖
 pnpm install
+
+# 构建前端
+pnpm run build
+
+# 启动桌面应用
+make run
 ```
+
+浏览器自动打开 `http://localhost:25080`。
 
 ## 开发
 
 ```bash
-# 启动开发服务器
-pnpm tauri dev
+# 终端1：启动 Go 后端
+go run ./cmd/open-todo/
+
+# 终端2：启动前端开发服务器（热更新）
+pnpm dev
 ```
+
+前端开发服务器运行在 `http://localhost:5173`，API 请求自动代理到 Go 后端。
 
 ## 构建
 
-### Windows
-
 ```bash
-# 使用构建脚本
-build_windows.bat
+# 当前平台
+make build
 
-# 或手动构建
-pnpm tauri build
+# 交叉编译
+make build-win     # Windows
+make build-linux   # Linux
+make build-mac     # macOS
 ```
 
-### macOS / Linux
+构建产物在 `bin/` 目录。
+
+## 服务端部署
 
 ```bash
-pnpm tauri build
+cd server
+go build ./cmd/server/
+
+# SQLite 模式（默认）
+./server --driver sqlite --dsn /data/open-todo.db
+
+# PostgreSQL 模式
+./server --driver postgres --dsn "postgres://user:pass@host/db"
 ```
-
-构建产物位于 `src-tauri/target/release/bundle/` 目录。
-
-## 配置
-
-### API 设置
-
-应用支持配置 API 端点进行数据同步。设置入口位于应用内的设置菜单。
-
-### 本地设置
-
-创建 `settings.local.json` 文件可覆盖默认配置（该文件已加入 .gitignore）。
 
 ## 项目结构
 
 ```
-my-todo/
-├── src/                    # 前端源码
-│   ├── components/         # React 组件
-│   ├── lib/               # 工具函数和 API
-│   ├── store/             # Zustand 状态管理
-│   └── types/             # TypeScript 类型定义
-├── src-tauri/             # Tauri 后端
-│   ├── src/               # Rust 源码
-│   └── tauri.conf.json    # Tauri 配置
-└── public/                # 静态资源
+open-todo/
+├── cmd/open-todo/          # Go 桌面入口
+├── internal/
+│   ├── app/                # 业务逻辑（备份、提醒）
+│   ├── config/             # 配置管理
+│   ├── pkg/schema/         # 数据库 schema
+│   ├── server/api/         # HTTP API 路由
+│   ├── store/              # SQLite 数据库层
+│   ├── sync/               # 同步引擎
+│   └── ui/                 # 桌面 UI（systray）
+├── server/                 # Go 服务端（独立模块）
+├── src/                    # React 前端
+└── public/                 # 静态资源 + PWA manifest
 ```
-
-## 脚本命令
-
-| 命令 | 说明 |
-|------|------|
-| `pnpm dev` | 启动 Vite 开发服务器 |
-| `pnpm build` | 构建前端资源 |
-| `pnpm preview` | 预览构建结果 |
-| `pnpm tauri dev` | 启动 Tauri 开发模式 |
-| `pnpm tauri build` | 构建桌面应用 |
 
 ## 许可证
 
 MIT
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
