@@ -23,10 +23,11 @@ func NewClient(serverURL, token string) *Client {
 }
 
 type SyncRecord struct {
-	TableName string `json:"table_name"`
-	RecordID  string `json:"record_id"`
-	Action    string `json:"action"`
-	Timestamp string `json:"timestamp"`
+	TableName string          `json:"table_name"`
+	RecordID  string          `json:"record_id"`
+	Action    string          `json:"action"`
+	Timestamp string          `json:"timestamp"`
+	Data      json.RawMessage `json:"data,omitempty"`
 }
 
 type PushRequest struct {

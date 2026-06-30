@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	_ "modernc.org/sqlite"
@@ -17,10 +18,11 @@ type User struct {
 }
 
 type SyncRecord struct {
-	TableName string `json:"table_name"`
-	RecordID  string `json:"record_id"`
-	Action    string `json:"action"`
-	Timestamp string `json:"timestamp"`
+	TableName string          `json:"table_name"`
+	RecordID  string          `json:"record_id"`
+	Action    string          `json:"action"`
+	Timestamp string          `json:"timestamp"`
+	Data      json.RawMessage `json:"data,omitempty"`
 }
 
 type DB struct {

@@ -74,13 +74,23 @@ func (e *Engine) doPush() {
 	var records []SyncRecord
 	var ids []int64
 	for _, c := range changes {
+		data, err := e.store.GetFullRecord(c.TableName, c.RecordID)
+		if err != nil {
+			log.Printf("[sync] skip %s/%s: %v", c.TableName, c.RecordID, err)
+			continue
+		}
 		records = append(records, SyncRecord{
 			TableName: c.TableName,
 			RecordID:  c.RecordID,
 			Action:    c.Action,
 			Timestamp: c.Timestamp,
+			Data:      data,
 		})
 		ids = append(ids, c.ID)
+	}
+
+	if len(records) == 0 {
+		return
 	}
 
 	if err := e.client.Push(records); err != nil {
