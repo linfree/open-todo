@@ -1,4 +1,4 @@
-import type { DatabaseAdapter, Task, TaskList } from './types';
+import type { DatabaseAdapter, Task, TaskList, ChangeRecord } from './types';
 
 const BASE = ''; // 同源, 用相对路径
 
@@ -47,5 +47,13 @@ export class GoDesktopAdapter implements DatabaseAdapter {
   async deleteList(id: string): Promise<void> {
     const res = await fetch(`${BASE}/api/v1/lists/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(`deleteList: ${res.status}`);
+  }
+
+  async getUnsyncedChanges(): Promise<ChangeRecord[]> {
+    throw new Error("getUnsyncedChanges: not implemented — desktop sync is handled by Go SyncEngine");
+  }
+
+  async markChangesSynced(_changes: ChangeRecord[]): Promise<void> {
+    throw new Error("markChangesSynced: not implemented — desktop sync is handled by Go SyncEngine");
   }
 }

@@ -46,4 +46,6 @@ export interface DatabaseAdapter {
   getLists(): Promise<TaskList[]>;
   saveList(list: TaskList): Promise<TaskList>;
   deleteList(id: string): Promise<void>;
+  getUnsyncedChanges(): Promise<ChangeRecord[]>;
+  markChangesSynced(changes: ChangeRecord[]): Promise<void>;
 }

@@ -88,4 +88,13 @@ export class DexieAdapter implements DatabaseAdapter {
   async deleteList(id: string): Promise<void> {
     await db.lists.delete(id);
   }
+
+  async getUnsyncedChanges(): Promise<ChangeRecord[]> {
+    return db.syncLog.filter(c => !c.synced).toArray();
+  }
+
+  async markChangesSynced(changes: ChangeRecord[]): Promise<void> {
+    const ids = changes.map(c => c.id);
+    await db.syncLog.where('id').anyOf(ids).modify({ synced: true });
+  }
 }
