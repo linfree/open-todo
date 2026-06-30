@@ -3,7 +3,13 @@ import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus } from "../types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Card } from "./ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -34,13 +40,14 @@ export function AddTaskDialog({ isOpen, onClose }: AddTaskDialogProps) {
     onClose();
   }
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <Card className="w-full max-w-lg shadow-xl border-border/50">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>添加任务</DialogTitle>
+        </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="p-6">
+          <div className="py-2">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -49,14 +56,14 @@ export function AddTaskDialog({ isOpen, onClose }: AddTaskDialogProps) {
               autoFocus
             />
           </div>
-          <div className="flex justify-end gap-2 px-6 pb-6">
+          <DialogFooter className="mt-2">
             <Button type="button" variant="ghost" onClick={onClose} className="cursor-pointer">
               取消
             </Button>
             <Button type="submit">添加</Button>
-          </div>
+          </DialogFooter>
         </form>
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

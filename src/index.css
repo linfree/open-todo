@@ -96,6 +96,11 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  /* pb-safe: 移动端底部导航栏安全区适配 */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   /* 触摸优化 - 增大点击区域 */
   .touch-target {
     min-height: 44px;

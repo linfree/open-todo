@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { Task } from "../types";
 import { Button } from "./ui/button";
@@ -95,11 +95,34 @@ export function CalendarView({ onTaskClick, onDateClick: _onDateClick }: Calenda
           </Button>
         </div>
         <div className="flex items-center gap-1">
+          {/* 上一年 */}
+          <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(currentYear - 1, currentMonth, 1))} className="cursor-pointer" title="上一年">
+            <ChevronsLeft className="w-4 h-4 text-current" />
+          </Button>
+          {/* 上个月 */}
           <Button variant="ghost" size="icon" onClick={prevMonth} className="cursor-pointer">
             <ChevronLeft className="w-4 h-4 text-current" />
           </Button>
+          {/* 月份快速跳转 */}
+          <select
+            value={currentMonth}
+            onChange={(e) => setCurrentDate(new Date(currentYear, parseInt(e.target.value), 1))}
+            className="h-9 px-2 py-1 text-sm rounded-lg border border-border bg-muted/50 text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
+            aria-label="选择月份"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {i + 1}月
+              </option>
+            ))}
+          </select>
+          {/* 下个月 */}
           <Button variant="ghost" size="icon" onClick={nextMonth} className="cursor-pointer">
             <ChevronRight className="w-4 h-4 text-current" />
+          </Button>
+          {/* 下一年 */}
+          <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(currentYear + 1, currentMonth, 1))} className="cursor-pointer" title="下一年">
+            <ChevronsRight className="w-4 h-4 text-current" />
           </Button>
         </div>
       </div>

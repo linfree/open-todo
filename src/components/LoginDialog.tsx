@@ -9,7 +9,7 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { cn } from "../lib/utils";
-import { LogIn, UserPlus, Server, Mail, Lock, AlertCircle } from "lucide-react";
+import { LogIn, UserPlus, Server, Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 interface LoginDialogProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -198,15 +199,26 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
               <Lock className="w-3.5 h-3.5" />
               密码
             </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={mode === "register" ? "至少6位密码" : "输入密码"}
-              className="h-10"
-              required
-              minLength={mode === "register" ? 6 : undefined}
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "register" ? "至少6位密码" : "输入密码"}
+                className="h-10 pr-10"
+                required
+                minLength={mode === "register" ? 6 : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+                aria-label={showPassword ? "隐藏密码" : "显示密码"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {/* Error message */}

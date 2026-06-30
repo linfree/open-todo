@@ -41,7 +41,7 @@ export function TopTabBar({ currentView, onViewChange }: TopTabBarProps) {
       </div>
 
       {/* 移动端 - 底部固定导航栏 */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border/50 safe-area-inset-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border/50 pb-safe">
         <div className="flex items-center justify-around py-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
