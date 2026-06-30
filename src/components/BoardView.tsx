@@ -102,9 +102,9 @@ export function BoardView({ onTaskClick }: BoardViewProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* 移动端垂直堆叠，桌面端水平滚动 */}
-      <div className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
-        <div className="flex flex-col md:flex-row gap-3 md:gap-4 h-full min-h-0 p-3 sm:p-6">
+      {/* 移动端垂直堆叠，桌面端水平填充 */}
+      <div className="flex-1 overflow-y-auto md:overflow-hidden min-h-0">
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4 md:h-full min-h-0 p-3 sm:p-6">
           {COLUMNS.map((column) => {
             const columnTasks = getTasksByStatus(column.status);
             return (
@@ -171,7 +171,7 @@ function BoardColumn({ column, tasks, onTaskClick }: BoardColumnProps) {
   return (
     <div
       ref={setNodeRef}
-      className="flex-shrink-0 w-full md:w-80 flex flex-col bg-muted/40 rounded-xl border border-border/50"
+      className="flex-shrink-0 w-full md:flex-1 md:min-w-[260px] flex flex-col bg-muted/40 rounded-xl border border-border/50"
     >
       {/* 列头 */}
       <div className="p-3 sm:p-4 border-b border-border/50">
