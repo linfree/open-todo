@@ -170,7 +170,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
             ? "animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%]"
             : "animate-out fade-out-0 zoom-out-95 slide-out-to-left-1/2 slide-out-to-top-[48%]",
           // 移动端全屏显示
-          "sm:rounded-xl rounded-none sm:p-6 p-4 h-full sm:h-auto sm:max-h-[90vh] max-h-screen overflow-y-auto",
+          "sm:rounded-xl rounded-none sm:p-6 p-4 h-full sm:h-auto sm:max-h-[90vh] max-h-screen overflow-y-auto scrollbar-hide",
           className
         )}
         {...props}
