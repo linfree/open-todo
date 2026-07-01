@@ -201,7 +201,7 @@ function App() {
       </header>
 
       {/* 主内容区域 */}
-      <div className="flex-1 flex overflow-hidden pb-16 md:pb-0">
+      <div className="flex-1 flex overflow-hidden pb-16 md:pb-0 min-h-0">
         {/* 侧边栏 - 只在任务视图下显示 */}
         {mainView === MainView.TASK && (
           <TaskFilterSidebar
@@ -215,7 +215,7 @@ function App() {
         )}
 
         {/* 内容区域 */}
-        <main className="flex-1 flex flex-col bg-background overflow-hidden">
+        <main className="flex-1 flex flex-col bg-background overflow-hidden min-h-0">
           {/* 欢迎区域 - 仅在任务视图显示 */}
           {mainView === MainView.TASK && (
             <div className="flex-shrink-0 px-6 sm:px-8 pt-6 pb-4">
@@ -264,7 +264,7 @@ function App() {
           </div>
 
           {/* 视图内容 */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-0">
             {/* 任务列表视图 */}
             {mainView === MainView.TASK && (
               <DndContext
