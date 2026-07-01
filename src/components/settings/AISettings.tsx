@@ -4,6 +4,8 @@ import {
   EyeOff,
   Check,
   X,
+  Loader2,
+  TestTube,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -21,11 +23,36 @@ export function AISettings() {
   const [showKey, setShowKey] = useState(false);
   const [keyDirty, setKeyDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     aiConfigApi.loadConfig().then((c) => c && setConfig(c));
   }, []);
+
+  const handleTestConnection = async () => {
+    if (!config.base_url || !config.api_key) {
+      setMessage({ type: "error", text: "请先填写 API 地址和密钥" });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+    setIsTesting(true);
+    setMessage(null);
+    try {
+      const res = await fetch("http://localhost:25080/api/v1/ai/status");
+      const status = await res.json();
+      if (status.configured) {
+        setMessage({ type: "success", text: "连接成功，AI 服务可用" });
+      } else {
+        setMessage({ type: "error", text: "AI 未正确配置" });
+      }
+    } catch (e: any) {
+      setMessage({ type: "error", text: `连接失败: ${e.message || "未知错误"}` });
+    } finally {
+      setIsTesting(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -141,10 +168,14 @@ export function AISettings() {
               />
             </div>
 
-            {/* Save button */}
+            {/* Save + Test buttons */}
             <div className="flex items-center gap-3 pt-2">
               <Button onClick={handleSave} disabled={isLoading} size="sm">
                 保存配置
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleTestConnection} disabled={isTesting}>
+                {isTesting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <TestTube className="w-4 h-4 mr-1" />}
+                测试连接
               </Button>
 
               {message && (
