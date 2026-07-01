@@ -2,13 +2,21 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/linfree/open-todo/internal/app"
 	"github.com/linfree/open-todo/internal/config"
 )
 
-// RegisterAIRoutes registers AI configuration endpoints.
+// RegisterAIRoutes registers AI configuration and service endpoints.
 func RegisterAIRoutes(r *gin.RouterGroup) {
+	// AI config endpoints (existing)
 	r.GET("/ai-config", handleGetAIConfig)
 	r.POST("/ai-config", handleSaveAIConfig)
+
+	// AI service endpoints (new)
+	aiGroup := r.Group("/ai")
+	aiGroup.GET("/status", handleAIStatus)
+	aiGroup.POST("/parse-task", handleParseTask)
+	aiGroup.POST("/breakdown-task", handleBreakdownTask)
 }
 
 // maskedKey returns the API key with only the last 4 characters visible.
@@ -84,4 +92,66 @@ func handleSaveAIConfig(c *gin.Context) {
 		"ok":      true,
 		"api_key": maskedKey(apiKey),
 	})
+}
+
+// handleAIStatus returns whether AI is enabled and configured.
+func handleAIStatus(c *gin.Context) {
+	svc := app.NewAIService()
+	enabled, configured, model := svc.Status()
+	c.JSON(200, gin.H{
+		"enabled":    enabled,
+		"configured": configured,
+		"model":      model,
+	})
+}
+
+// handleParseTask parses natural language input into a structured task.
+func handleParseTask(c *gin.Context) {
+	var req struct {
+		Input string `json:"input"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.Input == "" {
+		c.JSON(400, gin.H{"error": "input不能为空"})
+		return
+	}
+
+	svc := app.NewAIService()
+	result, err := svc.ParseTask(req.Input)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, result)
+}
+
+// handleBreakdownTask breaks down a task into subtasks using AI.
+func handleBreakdownTask(c *gin.Context) {
+	var req struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.Title == "" {
+		c.JSON(400, gin.H{"error": "title不能为空"})
+		return
+	}
+
+	svc := app.NewAIService()
+	result, err := svc.BreakdownTask(req.Title, req.Description)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, result)
 }
