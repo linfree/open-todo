@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"github.com/gin-gonic/gin"
 	"github.com/linfree/open-todo/internal/app"
 	"github.com/linfree/open-todo/internal/config"
@@ -72,7 +73,7 @@ func handleSaveAIConfig(c *gin.Context) {
 
 	apiKey := req.APIKey
 	// If the incoming key is masked (contains ****), keep the existing key
-	if len(apiKey) > 0 && apiKey[:4] == "****" {
+	if len(apiKey) > 0 && strings.Contains(apiKey, "*") {
 		apiKey = existing.APIKey
 	}
 
