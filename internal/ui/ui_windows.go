@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"syscall"
+	"time"
+	"unsafe"
 
 	"github.com/getlantern/systray"
 	"github.com/jchv/go-webview2"
@@ -71,13 +74,10 @@ func (u *windowsUI) Run(onReady func()) {
 			}
 		}()
 	}, func() {
-		// onExit — noop
+		// onExit -- noop
 	})
 }
 
-// startWebviewLoop spawns a single OS-thread-locked goroutine that owns all
-// WebView2 windows. Win32 windows and COM objects must stay on their creating
-// thread, otherwise the message pump deadlocks.
 func (u *windowsUI) startWebviewLoop() {
 	u.mu.Lock()
 	if u.started {
@@ -94,7 +94,6 @@ func (u *windowsUI) startWebviewLoop() {
 		for range u.showReq {
 			w := webview2.New(false)
 			if w == nil {
-				// WebView2 runtime not installed, fall back to browser.
 				openBrowser(localURL(u.port))
 				continue
 			}
@@ -107,8 +106,9 @@ func (u *windowsUI) startWebviewLoop() {
 			w.SetSize(800, 600, webview2.HintMin)
 			w.Navigate(localURL(u.port))
 
-			// w.Run blocks until the window is destroyed (user clicks X
-			// or closeWebview calls w.Destroy from another goroutine).
+			// Set window icon in background (wait for window creation)
+			go setWindowIcon()
+
 			w.Run()
 
 			u.mu.Lock()
@@ -118,7 +118,6 @@ func (u *windowsUI) startWebviewLoop() {
 	}()
 }
 
-// showWindow signals the WebView2 loop to create (or re-create) a window.
 func (u *windowsUI) showWindow() {
 	select {
 	case u.showReq <- struct{}{}:
@@ -126,8 +125,6 @@ func (u *windowsUI) showWindow() {
 	}
 }
 
-// closeWebview posts WM_CLOSE from the calling goroutine. This is thread-safe
-// because Destroy() uses PostMessageW, which can be called from any thread.
 func (u *windowsUI) closeWebview() {
 	u.mu.Lock()
 	w := u.webview
@@ -141,5 +138,58 @@ func (u *windowsUI) Quit() {
 	select {
 	case u.quitC <- struct{}{}:
 	default:
+	}
+}
+
+var (
+	user32            = syscall.NewLazyDLL("user32.dll")
+	findWindowW       = user32.NewProc("FindWindowW")
+	sendMessageW      = user32.NewProc("SendMessageW")
+	loadImageW        = user32.NewProc("LoadImageW")
+)
+
+const (
+	WM_SETICON = 0x0080
+	ICON_BIG   = 1
+	ICON_SMALL = 0
+	IMAGE_ICON = 1
+	LR_LOADFROMFILE = 0x0010
+)
+
+var (
+	kernel32           = syscall.NewLazyDLL("kernel32.dll")
+	getModuleHandleW   = kernel32.NewProc("GetModuleHandleW")
+)
+
+func setWindowIcon() {
+	// Wait for window creation
+	time.Sleep(500 * time.Millisecond)
+
+	// Get HINSTANCE of current exe (pass nil for current process)
+	hInstance, _, _ := getModuleHandleW.Call(0)
+
+	for i := 0; i < 20; i++ {
+		title, _ := syscall.UTF16PtrFromString("Open Todo")
+		hwnd, _, _ := findWindowW.Call(0, uintptr(unsafe.Pointer(title)))
+		if hwnd != 0 {
+			// Load icon from exe resource (ID=1, embedded by rsrc)
+			hIcon, _, _ := loadImageW.Call(hInstance, 1, IMAGE_ICON, 32, 32, 0)
+			if hIcon == 0 {
+				hIcon, _, _ = loadImageW.Call(hInstance, 1, IMAGE_ICON, 16, 16, 0)
+			}
+
+			// Fallback: try loading from file
+			if hIcon == 0 {
+				iconPath := syscall.StringToUTF16Ptr("internal\\ui\\icon.ico")
+				hIcon, _, _ = loadImageW.Call(0, uintptr(unsafe.Pointer(iconPath)), IMAGE_ICON, 0, 0, LR_LOADFROMFILE)
+			}
+
+			if hIcon != 0 {
+				sendMessageW.Call(hwnd, WM_SETICON, ICON_BIG, hIcon)
+				sendMessageW.Call(hwnd, WM_SETICON, ICON_SMALL, hIcon)
+			}
+			return
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
