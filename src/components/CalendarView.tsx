@@ -61,8 +61,8 @@ export function CalendarView({ onTaskClick, onDateClick }: CalendarViewProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto scrollbar-hide">
-      <div className="flex flex-col p-4 sm:p-6">
+    <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-3 sm:gap-4">
             <h2 className="text-lg sm:text-xl font-semibold text-foreground">

@@ -297,7 +297,7 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
         <DialogHeader>
           <DialogTitle>{editing ? "编辑任务" : "任务详情"}</DialogTitle>
         </DialogHeader>
