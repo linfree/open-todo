@@ -91,7 +91,7 @@ export function AISettings() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 space-y-6 pb-10">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 sm:pr-2 space-y-6 pb-10">
         {/* Enable toggle */}
         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
           <div>

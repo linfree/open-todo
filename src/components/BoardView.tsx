@@ -103,7 +103,7 @@ export function BoardView({ onTaskClick }: BoardViewProps) {
       onDragEnd={handleDragEnd}
     >
       {/* 移动端垂直堆叠，桌面端水平填充 */}
-      <div className="flex-1 overflow-y-auto md:overflow-hidden min-h-0">
+      <div className="flex-1 overflow-y-auto scrollbar-hide md:overflow-hidden min-h-0">
         <div className="flex flex-col md:flex-row gap-3 md:gap-4 md:h-full min-h-0 p-3 sm:p-6">
           {COLUMNS.map((column) => {
             const columnTasks = getTasksByStatus(column.status);
@@ -198,7 +198,7 @@ function BoardColumn({ column, tasks, onTaskClick, isAnyDragging = false }: Boar
         items={tasks.map((t) => t.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 sm:space-y-3 min-h-[150px] md:min-h-[200px]">
+        <div className="flex-1 overflow-y-auto scrollbar-hide p-2 sm:p-3 space-y-2 sm:space-y-3 min-h-[150px] md:min-h-[200px]">
           {tasks.length === 0 && !isAddingTask ? (
             <div className="text-center py-6 sm:py-8 text-muted-foreground/70 text-xs sm:text-sm">
               {isAnyDragging ? "拖放到此处" : "拖放任务到这里"}

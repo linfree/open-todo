@@ -96,7 +96,7 @@ export function CalendarView({ onTaskClick, onDateClick }: CalendarViewProps) {
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-border/50 border-x border-border/50 flex-1 overflow-y-auto">
+      <div className="grid grid-cols-7 gap-px bg-border/50 border-x border-border/50 flex-1 overflow-y-auto scrollbar-hide">
         {calendarDays}
       </div>
 

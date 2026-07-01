@@ -407,7 +407,7 @@ export function TaskFilterSidebar({ className, isOpen = true, onClose, onOpenSet
         </button>
 
         {/* 树形导航 */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-4 space-y-0.5">
           {treeData.map((node) => renderNode(node, 0))}
         </div>
 

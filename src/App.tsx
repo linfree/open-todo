@@ -273,7 +273,7 @@ function App() {
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
-                <div className="h-full overflow-y-auto px-6 sm:px-8 pb-8">
+                <div className="h-full overflow-y-auto scrollbar-hide px-6 sm:px-8 pb-8">
                   <div className="max-w-4xl 2xl:max-w-6xl">
                     {filteredTasks.length === 0 ? (
                       <Card className="border-dashed border-2 border-border/50">
