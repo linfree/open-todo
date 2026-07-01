@@ -91,8 +91,7 @@ function App() {
   };
 
   const handleDateClick = (date: Date) => {
-    // 切换到任务视图，并创建一个到期日为该日期的新任务
-    setMainView(MainView.TASK);
+    // 在后台创建任务，留在当前视图
     addTask({
       title: "新任务",
       completed: false,
