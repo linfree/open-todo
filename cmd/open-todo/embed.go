@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +15,6 @@ var webAssets embed.FS
 func registerStaticRoutes(r *gin.Engine) {
 	sub, err := fs.Sub(webAssets, "web-dist")
 	if err != nil {
-		// 开发模式: 没有 web-dist 目录, 跳过
 		return
 	}
 
@@ -26,6 +26,22 @@ func registerStaticRoutes(r *gin.Engine) {
 	})
 
 	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+
+		// Try serving static file first
+		if strings.HasPrefix(path, "/") {
+			path = path[1:]
+		}
+		if path != "" && strings.Contains(path, ".") {
+			f, err := sub.Open(path)
+			if err == nil {
+				f.Close()
+				fileServer.ServeHTTP(c.Writer, c.Request)
+				return
+			}
+		}
+
+		// SPA fallback
 		data, err := webAssets.ReadFile("web-dist/index.html")
 		if err != nil {
 			c.String(http.StatusNotFound, "Frontend not built. Run: cd web && npm run build")
