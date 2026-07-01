@@ -5,16 +5,18 @@ import {
   DialogTitle,
   DialogDescription
 } from "./ui/dialog";
-import { 
-  Bell, 
-  Database, 
+import {
+  Bell,
+  Database,
   Settings as SettingsIcon,
-  Code2
+  Code2,
+  Brain
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { NotificationSettings } from "./settings/NotificationSettings";
 import { DataSettings } from "./settings/DataSettings";
 import { DeveloperSettings } from "./settings/DeveloperSettings";
+import { AISettings } from "./settings/AISettings";
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -22,7 +24,7 @@ interface SettingsDialogProps {
   initialTab?: string;
 }
 
-type SettingsTab = "data" | "notification" | "developer";
+type SettingsTab = "data" | "notification" | "developer" | "ai";
 
 export function SettingsDialog({ isOpen, onClose, initialTab = "data" }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("data");
@@ -31,7 +33,7 @@ export function SettingsDialog({ isOpen, onClose, initialTab = "data" }: Setting
     if (isOpen && initialTab) {
       if (initialTab === "sync" || initialTab === "backup" || initialTab === "storage") {
         setActiveTab("data");
-      } else if (["data", "notification", "developer"].includes(initialTab)) {
+      } else if (["data", "notification", "developer", "ai"].includes(initialTab)) {
         setActiveTab(initialTab as SettingsTab);
       } else {
         setActiveTab("data");
@@ -42,6 +44,7 @@ export function SettingsDialog({ isOpen, onClose, initialTab = "data" }: Setting
   const tabs = [
     { id: "data", label: "数据同步", icon: Database, component: DataSettings },
     { id: "notification", label: "通知提醒", icon: Bell, component: NotificationSettings },
+    { id: "ai", label: "AI 助手", icon: Brain, component: AISettings },
     { id: "developer", label: "开发文档", icon: Code2, component: DeveloperSettings },
   ];
 

@@ -296,6 +296,41 @@ export const notificationApi = {
   },
 };
 
+// ==================== AI Config API ====================
+
+export interface AIConfig {
+  enabled: boolean;
+  base_url: string;
+  api_key: string;  // masked when loaded (only last 4 chars visible)
+  model: string;
+  system_prompt: string;
+}
+
+export const aiConfigApi = {
+  async loadConfig(): Promise<AIConfig | null> {
+    try {
+      const res = await fetch("/api/v1/ai-config");
+      if (!res.ok) throw new Error(`loadAIConfig: ${res.status}`);
+      return res.json();
+    } catch {
+      const stored = localStorage.getItem("ai_config");
+      return stored ? JSON.parse(stored) : null;
+    }
+  },
+
+  async saveConfig(config: AIConfig): Promise<void> {
+    try {
+      await fetch("/api/v1/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+    } catch {
+      localStorage.setItem("ai_config", JSON.stringify(config));
+    }
+  },
+};
+
 // ==================== WebDAV API ====================
 
 // 备份设置
