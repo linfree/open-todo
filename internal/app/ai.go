@@ -50,6 +50,37 @@ func (s *AIService) Status() (enabled bool, configured bool, model string) {
 	return s.cfg.Enabled, s.cfg.Enabled && s.cfg.APIKey != "", s.cfg.Model
 }
 
+// TestConnection tests the AI API connection by listing available models.
+func (s *AIService) TestConnection() error {
+	if s.cfg.APIKey == "" {
+		return fmt.Errorf("API密钥未配置")
+	}
+
+	url := strings.TrimRight(s.cfg.BaseURL, "/") + "/models"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("创建请求失败: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+s.cfg.APIKey)
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("网络请求失败: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 401 || resp.StatusCode == 403 {
+		return fmt.Errorf("API密钥无效 (状态码 %d)", resp.StatusCode)
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API返回错误 (状态码 %d): %s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
+
 // ParseTask parses natural language input into a structured task using AI.
 func (s *AIService) ParseTask(input string) (*ParsedTask, error) {
 	if !s.cfg.Enabled || s.cfg.APIKey == "" {

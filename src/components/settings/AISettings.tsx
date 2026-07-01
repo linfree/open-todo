@@ -39,12 +39,12 @@ export function AISettings() {
     setIsTesting(true);
     setMessage(null);
     try {
-      const res = await fetch("http://localhost:25080/api/v1/ai/status");
-      const status = await res.json();
-      if (status.configured) {
-        setMessage({ type: "success", text: "连接成功，AI 服务可用" });
+      const res = await fetch("/api/v1/ai/test", { method: "POST" });
+      const result = await res.json();
+      if (result.ok) {
+        setMessage({ type: "success", text: "连接成功，API 密钥有效" });
       } else {
-        setMessage({ type: "error", text: "AI 未正确配置" });
+        setMessage({ type: "error", text: result.error || "连接失败" });
       }
     } catch (e: any) {
       setMessage({ type: "error", text: `连接失败: ${e.message || "未知错误"}` });

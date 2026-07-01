@@ -15,6 +15,7 @@ func RegisterAIRoutes(r *gin.RouterGroup) {
 	// AI service endpoints (new)
 	aiGroup := r.Group("/ai")
 	aiGroup.GET("/status", handleAIStatus)
+	aiGroup.POST("/test", handleAITest)
 	aiGroup.POST("/parse-task", handleParseTask)
 	aiGroup.POST("/breakdown-task", handleBreakdownTask)
 }
@@ -103,6 +104,16 @@ func handleAIStatus(c *gin.Context) {
 		"configured": configured,
 		"model":      model,
 	})
+}
+
+// handleAITest tests the AI API connection.
+func handleAITest(c *gin.Context) {
+	svc := app.NewAIService()
+	if err := svc.TestConnection(); err != nil {
+		c.JSON(200, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"ok": true})
 }
 
 // handleParseTask parses natural language input into a structured task.
