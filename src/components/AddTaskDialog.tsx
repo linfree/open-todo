@@ -4,6 +4,7 @@ import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus } from "../types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { cn } from "../lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,24 @@ export function AddTaskDialog({ isOpen, onClose, dueDate }: AddTaskDialogProps) 
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="py-2 space-y-3">
+            {configured && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUseAI(!useAI)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                    useAI
+                      ? "bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700"
+                      : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+                  )}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  AI 创建
+                </button>
+                {aiLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-500" />}
+              </div>
+            )}
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -135,19 +154,6 @@ export function AddTaskDialog({ isOpen, onClose, dueDate }: AddTaskDialogProps) 
                 <Calendar className="w-4 h-4" />
                 <span>截止日期：{dueDate.toLocaleDateString("zh-CN")}</span>
               </div>
-            )}
-            {configured && (
-              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useAI}
-                  onChange={(e) => setUseAI(e.target.checked)}
-                  className="w-4 h-4 rounded accent-primary"
-                />
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>AI 创建</span>
-                {aiLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              </label>
             )}
           </div>
           <DialogFooter className="mt-2">
