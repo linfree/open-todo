@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Calendar } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus } from "../types";
 import { Button } from "./ui/button";
@@ -14,9 +15,10 @@ import {
 interface AddTaskDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  dueDate?: Date;
 }
 
-export function AddTaskDialog({ isOpen, onClose }: AddTaskDialogProps) {
+export function AddTaskDialog({ isOpen, onClose, dueDate }: AddTaskDialogProps) {
   const [title, setTitle] = useState("");
   const { addTask, currentListId, currentCategoryId } = useTodoStore();
 
@@ -35,19 +37,20 @@ export function AddTaskDialog({ isOpen, onClose }: AddTaskDialogProps) {
       subTasks: [],
       reminders: [],
       order: 0,
+      dueDate: dueDate,
     });
     setTitle("");
     onClose();
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>添加任务</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="py-2">
+          <div className="py-2 space-y-3">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -55,6 +58,12 @@ export function AddTaskDialog({ isOpen, onClose }: AddTaskDialogProps) {
               className="text-base"
               autoFocus
             />
+            {dueDate && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>截止日期：{dueDate.toLocaleDateString("zh-CN")}</span>
+              </div>
+            )}
           </div>
           <DialogFooter className="mt-2">
             <Button type="button" variant="ghost" onClick={onClose} className="cursor-pointer">

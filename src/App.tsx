@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Moon, Sun, Menu, X, LogOut, User } from "lucide-react";
 import { useTodoStore } from "./store/todoStore";
-import { Task, MainView, Priority, TaskStatus } from "./types";
+import { Task, MainView } from "./types";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Card, CardContent } from "./components/ui/card";
@@ -70,7 +70,7 @@ function App() {
     return null;
   });
 
-  const { getFilteredTasks, searchQuery, setSearchQuery, mainView, reorderTasks, isTrashView, setMainView, addTask, currentCategoryId } = useTodoStore();
+  const { getFilteredTasks, searchQuery, setSearchQuery, mainView, reorderTasks, isTrashView, setMainView } = useTodoStore();
   const filteredTasks = getFilteredTasks();
 
   const greeting = getGreeting();
@@ -90,21 +90,11 @@ function App() {
     setIsDetailDialogOpen(true);
   };
 
+  const [prefillDate, setPrefillDate] = useState<Date | undefined>();
+
   const handleDateClick = (date: Date) => {
-    // 在后台创建任务，留在当前视图
-    addTask({
-      title: "新任务",
-      completed: false,
-      priority: Priority.NONE,
-      status: TaskStatus.TODO,
-      listId: "all",
-      categoryId: currentCategoryId || undefined,
-      tags: [],
-      subTasks: [],
-      reminders: [],
-      order: 0,
-      dueDate: date,
-    });
+    setPrefillDate(date);
+    setIsAddDialogOpen(true);
   };
 
   const sensors = useSensors(
@@ -343,7 +333,8 @@ function App() {
       {/* 对话框 */}
       <AddTaskDialog
         isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
+        onClose={() => { setIsAddDialogOpen(false); setPrefillDate(undefined); }}
+        dueDate={prefillDate}
       />
 
       <TaskDetailDialog
