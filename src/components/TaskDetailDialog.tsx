@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tag, Plus, Trash2, Bell, Sparkles, Loader2, CheckCircle2, Circle } from "lucide-react";
+import { Tag, Plus, Trash2, Bell, Sparkles, Loader2, CheckCircle2, Circle, Clock, ListChecks, Flag, FolderOpen } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus, Task, SubTask, Reminder, Tag as TagType } from "../types";
 import { Button } from "./ui/button";
@@ -349,10 +349,10 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
           </div>
 
           {/* 优先级和状态 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">优先级</label>
-              {editing ? (
+          {editing ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">优先级</label>
                 <Select value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
                   {priorityOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -360,15 +360,9 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                     </option>
                   ))}
                 </Select>
-              ) : (
-                <Badge variant={priorityBadgeVariant(priority)}>
-                  {priorityLabel(priority)}
-                </Badge>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">状态</label>
-              {editing ? (
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">状态</label>
                 <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -376,18 +370,39 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                     </option>
                   ))}
                 </Select>
-              ) : (
-                <Badge variant={statusBadgeVariant(status)}>
-                  {statusLabel(status)}
-                </Badge>
-              )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Flag className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">优先级 / 状态</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs text-muted-foreground">优先级</span>
+                  <div className="mt-1">
+                    <Badge variant={priorityBadgeVariant(priority)}>
+                      {priorityLabel(priority)}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">状态</span>
+                  <div className="mt-1">
+                    <Badge variant={statusBadgeVariant(status)}>
+                      {statusLabel(status)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 分类 */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">分类</label>
-            {editing ? (
+          {editing ? (
+            <div>
+              <label className="text-sm font-medium mb-2 block">分类</label>
               <Select value={categoryId || "inbox"} onChange={(e) => setCategoryId(e.target.value)}>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -395,37 +410,51 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                   </option>
                 ))}
               </Select>
-            ) : (
+            </div>
+          ) : (
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <FolderOpen className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">分类</span>
+              </div>
               <p className="text-sm">
                 {categories.find((c) => c.id === categoryId)?.name || "收件箱"}
               </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 截止时间 */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">截止时间</label>
-            {editing ? (
+          {editing ? (
+            <div>
+              <label className="text-sm font-medium mb-2 block">截止时间</label>
               <DatePicker
                 value={dueDate}
                 onChange={setDueDate}
                 placeholder="选择截止日期和时间"
                 showSeconds={true}
               />
-            ) : (
-              <p className="text-sm">
-                {dueDate ? formatDate(dueDate) : "未设置"}
-              </p>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">截止时间</span>
+              </div>
+              {dueDate ? (
+                <p className="text-sm font-medium">{formatDate(dueDate)}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">未设置</p>
+              )}
+            </div>
+          )}
 
           {/* 标签 */}
-          <div>
-            <label className="text-sm font-medium mb-2 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-current" />
-              标签
-            </label>
-            {editing ? (
+          {editing ? (
+            <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-current" />
+                标签
+              </label>
               <>
                 <div className="flex flex-wrap gap-2">
                   {storeTags.map((tag) => {
@@ -498,7 +527,13 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                   </div>
                 )}
               </>
-            ) : (
+            </div>
+          ) : (
+            <div className="bg-muted/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Tag className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">标签</span>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {selectedTags.length === 0 ? (
                   <span className="text-sm text-muted-foreground">暂无标签</span>
@@ -514,13 +549,16 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                   ))
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 子任务 */}
-          <div>
+          <div className={cn(!editing && "bg-muted/30 rounded-lg p-3")}>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">子任务</label>
+              <label className="text-sm font-medium flex items-center gap-1.5">
+                <ListChecks className="w-4 h-4 text-muted-foreground" />
+                子任务
+              </label>
               {aiEnabled && aiConfigured && (
                 <Button
                   type="button"
@@ -541,6 +579,11 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
             </div>
             {aiBreakdownError && (
               <p className="text-xs text-red-500 mb-2">{aiBreakdownError}</p>
+            )}
+            {!editing && subTasks.length > 0 && (
+              <p className="text-xs text-muted-foreground mb-2">
+                {subTasks.filter(st => st.completed).length}/{subTasks.length} 已完成
+              </p>
             )}
             <div className="space-y-2">
               {subTasks.length === 0 && (
@@ -679,18 +722,17 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="bg-muted/30 rounded-lg p-3 space-y-2">
                 {reminders.length === 0 ? (
                   <p className="text-sm text-muted-foreground">暂无提醒</p>
                 ) : (
                   reminders.map((reminder) => (
                     <div
                       key={reminder.id}
-                      className="flex items-center gap-2 text-sm p-2 rounded-lg bg-muted/50"
+                      className="flex items-center gap-2 text-sm"
                     >
-                      <Bell className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <span>{formatDate(reminder.date)}</span>
-                      <span className="text-muted-foreground">
+                      <span className="flex-1">{formatDate(reminder.date)}</span>
+                      <span className="px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">
                         {repeatLabel(reminder.repeat || "none")}
                       </span>
                     </div>
@@ -701,7 +743,7 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sm:space-x-3 gap-3">
           {editing ? (
             <>
               <Button variant="outline" onClick={handleCancelEdit}>
