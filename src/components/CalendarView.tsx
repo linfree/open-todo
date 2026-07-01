@@ -61,45 +61,46 @@ export function CalendarView({ onTaskClick, onDateClick }: CalendarViewProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden min-h-0">
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-            {currentYear}年{currentMonth + 1}月
-          </h2>
-          <Button variant="outline" size="sm" onClick={goToToday} className="cursor-pointer">今天</Button>
+    <div className="h-full overflow-y-auto scrollbar-hide">
+      <div className="flex flex-col p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+              {currentYear}年{currentMonth + 1}月
+            </h2>
+            <Button variant="outline" size="sm" onClick={goToToday} className="cursor-pointer">今天</Button>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(currentYear - 1, currentMonth, 1))} className="cursor-pointer" title="上一年">
+              <ChevronsLeft className="w-4 h-4 text-current" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={prevMonth} className="cursor-pointer">
+              <ChevronLeft className="w-4 h-4 text-current" />
+            </Button>
+            <select value={currentMonth} onChange={(e) => setCurrentDate(new Date(currentYear, parseInt(e.target.value), 1))} className="h-9 px-2 py-1 text-sm rounded-lg border border-border bg-muted/50 text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring appearance-none" aria-label="选择月份">
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i} value={i}>{i + 1}月</option>
+              ))}
+            </select>
+            <Button variant="ghost" size="icon" onClick={nextMonth} className="cursor-pointer">
+              <ChevronRight className="w-4 h-4 text-current" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(currentYear + 1, currentMonth, 1))} className="cursor-pointer" title="下一年">
+              <ChevronsRight className="w-4 h-4 text-current" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(currentYear - 1, currentMonth, 1))} className="cursor-pointer" title="上一年">
-            <ChevronsLeft className="w-4 h-4 text-current" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={prevMonth} className="cursor-pointer">
-            <ChevronLeft className="w-4 h-4 text-current" />
-          </Button>
-          <select value={currentMonth} onChange={(e) => setCurrentDate(new Date(currentYear, parseInt(e.target.value), 1))} className="h-9 px-2 py-1 text-sm rounded-lg border border-border bg-muted/50 text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring appearance-none" aria-label="选择月份">
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i} value={i}>{i + 1}月</option>
-            ))}
-          </select>
-          <Button variant="ghost" size="icon" onClick={nextMonth} className="cursor-pointer">
-            <ChevronRight className="w-4 h-4 text-current" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(currentYear + 1, currentMonth, 1))} className="cursor-pointer" title="下一年">
-            <ChevronsRight className="w-4 h-4 text-current" />
-          </Button>
+
+        <div className="grid grid-cols-7 gap-px bg-border/50 border border-border/50 rounded-t-xl overflow-hidden">
+          {WEEKDAYS.map((day) => (
+            <div key={day} className="bg-muted/40 p-2 text-center text-sm font-medium text-foreground">{day}</div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-px bg-border/50 border-x border-border/50 rounded-b-xl">
+          {calendarDays}
         </div>
       </div>
-
-      <div className="grid grid-cols-7 gap-px bg-border/50 border border-border/50 rounded-t-xl overflow-hidden">
-        {WEEKDAYS.map((day) => (
-          <div key={day} className="bg-muted/40 p-2 text-center text-sm font-medium text-foreground">{day}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-px bg-border/50 border-x border-border/50 flex-1 min-h-0 overflow-y-auto scrollbar-hide rounded-b-xl">
-        {calendarDays}
-      </div>
-
     </div>
   );
 }
@@ -118,13 +119,6 @@ function CalendarDay({ day, date, tasks, isToday, onTaskClick, onDateClick }: Ca
   const displayTasks = tasks.slice(0, maxTasksToShow);
   const remainingCount = tasks.length - maxTasksToShow;
 
-  const priorityColors = {
-    none: "bg-muted text-foreground",
-    low: "bg-blue-500 text-white",
-    medium: "bg-amber-500 text-white",
-    high: "bg-red-500 text-white",
-  };
-
   return (
     <div
       onClick={() => onDateClick?.(date)}
@@ -142,7 +136,7 @@ function CalendarDay({ day, date, tasks, isToday, onTaskClick, onDateClick }: Ca
       <div className="space-y-1">
         {displayTasks.map((task) => (
           <div key={task.id} onClick={(e) => { e.stopPropagation(); onTaskClick(task); }}
-            className={cn("text-xs px-1.5 py-0.5 rounded-md truncate shadow-sm", priorityColors[task.priority], task.completed && "opacity-50 line-through")}>
+            className={cn("text-xs px-1.5 py-0.5 rounded-md truncate", task.completed && "opacity-50 line-through bg-muted text-muted-foreground")}>
             {task.title}
           </div>
         ))}
