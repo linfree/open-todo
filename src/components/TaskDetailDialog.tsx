@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tag, Plus, Trash2, Bell } from "lucide-react";
+import { Tag, Plus, Trash2, Bell, Sparkles, Loader2 } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus, Task, SubTask, Reminder, Tag as TagType } from "../types";
 import { Button } from "./ui/button";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { ConfirmDialog } from "./ui/confirm-dialog";
 import { DatePicker } from "./ui/date-picker";
 import { cn } from "../lib/utils";
+import { useAIStatus } from "../lib/ai";
 import { TAG_COLORS } from "../lib/icons";
 
 interface TaskDetailDialogProps {
@@ -40,6 +41,11 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
   // 删除确认
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "task" } | { type: "subtask"; id: string } | { type: "reminder"; id: string } | null>(null);
+
+  // AI breakdown state
+  const { enabled: aiEnabled, configured: aiConfigured } = useAIStatus();
+  const [aiBreakdownLoading, setAIBreakdownLoading] = useState(false);
+  const [aiBreakdownError, setAIBreakdownError] = useState<string | null>(null);
 
   // 初始化表单
   useEffect(() => {
@@ -118,6 +124,40 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
 
     setSubTasks([...subTasks, newSubTask]);
     setNewSubTaskTitle("");
+  };
+
+  const handleAIBreakdown = async () => {
+    setAIBreakdownLoading(true);
+    setAIBreakdownError(null);
+
+    try {
+      const res = await fetch("/api/v1/ai/breakdown-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(data.error || `请求失败 (${res.status})`);
+      }
+
+      const result = await res.json();
+      const newSubs: SubTask[] = (result.subtasks || []).map((st: { title: string }) => ({
+        id: crypto.randomUUID(),
+        title: st.title,
+        completed: false,
+      }));
+
+      if (newSubs.length > 0) {
+        setSubTasks([...subTasks, ...newSubs]);
+      }
+    } catch (err: any) {
+      const msg = typeof err === "string" ? err : (err.message || "未知错误");
+      setAIBreakdownError(msg);
+    } finally {
+      setAIBreakdownLoading(false);
+    }
   };
 
   const toggleSubTask = (id: string) => {
@@ -356,7 +396,29 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
 
           {/* 子任务 */}
           <div>
-            <label className="text-sm font-medium mb-2 block">子任务</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">子任务</label>
+              {aiEnabled && aiConfigured && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAIBreakdown}
+                  disabled={aiBreakdownLoading}
+                  className="h-7 gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950 text-xs"
+                >
+                  {aiBreakdownLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  AI 拆解
+                </Button>
+              )}
+            </div>
+            {aiBreakdownError && (
+              <p className="text-xs text-red-500 mb-2">{aiBreakdownError}</p>
+            )}
             <div className="space-y-2">
               {subTasks.map((subTask) => (
                 <div
