@@ -170,7 +170,9 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
       }));
 
       if (newSubs.length > 0) {
-        setSubTasks([...subTasks, ...newSubs]);
+        const merged = [...subTasks, ...newSubs];
+        setSubTasks(merged);
+        updateTask(task!.id, { subTasks: merged });
       }
     } catch (err: any) {
       const msg = typeof err === "string" ? err : (err.message || "未知错误");
