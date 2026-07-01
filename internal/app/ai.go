@@ -231,6 +231,15 @@ func (s *AIService) chatCompletion(systemPrompt, userMessage string) (string, er
 func extractJSON(s string) string {
 	s = strings.TrimSpace(s)
 
+	// Strip text before the first { or [ (e.g., thinking chain output)
+	if idx := strings.Index(s, "{"); idx > 0 {
+		s = s[idx:]
+	}
+	// Also handle the case where JSON is preceded by text and then array
+	if idx := strings.Index(s, "["); idx > 0 && (strings.Index(s, "{") == -1 || idx < strings.Index(s, "{")) {
+		s = s[idx:]
+	}
+
 	// Try to extract from markdown code blocks: ```json ... ```
 	if strings.HasPrefix(s, "```") {
 		s = strings.TrimPrefix(s, "```json")
@@ -239,6 +248,11 @@ func extractJSON(s string) string {
 			s = s[:idx]
 		}
 		return strings.TrimSpace(s)
+	}
+
+	// If there's trailing text after the last }, strip it
+	if lastBrace := strings.LastIndex(s, "}"); lastBrace >= 0 && lastBrace < len(s)-1 {
+		s = s[:lastBrace+1]
 	}
 
 	return s
