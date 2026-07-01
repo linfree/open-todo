@@ -61,7 +61,7 @@ export function CalendarView({ onTaskClick, onDateClick }: CalendarViewProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden min-h-0">
+    <div className="flex-1 overflow-y-auto scrollbar-hide p-4 sm:p-6 flex flex-col min-h-0">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div className="flex items-center gap-3 sm:gap-4">
           <h2 className="text-lg sm:text-xl font-semibold text-foreground">
@@ -96,7 +96,7 @@ export function CalendarView({ onTaskClick, onDateClick }: CalendarViewProps) {
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-border/50 border-x border-border/50 min-h-0 flex-1 overflow-y-auto scrollbar-hide rounded-b-xl">
+      <div className="grid grid-cols-7 gap-px bg-border/50 border-x border-border/50 rounded-b-xl">
         {calendarDays}
       </div>
 
