@@ -132,7 +132,7 @@ function App() {
   }
 
   return (
-    <div className={cn("h-screen h-dvh w-screen flex flex-col overflow-hidden", isDark && "dark")}>
+    <div className={cn("h-screen h-dvh w-screen flex flex-col overflow-hidden scrollbar-hide", isDark && "dark")}>
       {/* 顶部 Tab 导航 */}
       <header className="flex-shrink-0 px-4 sm:px-6 py-4 bg-background border-b border-border/50">
         <div className="flex items-center justify-between">
