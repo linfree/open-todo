@@ -168,30 +168,33 @@ export function AISettings() {
               />
             </div>
 
-            {/* Save + Test buttons */}
+            {/* Test button */}
             <div className="flex items-center gap-3 pt-2">
-              <Button onClick={handleSave} disabled={isLoading} size="sm">
-                保存配置
-              </Button>
               <Button variant="outline" size="sm" onClick={handleTestConnection} disabled={isTesting}>
                 {isTesting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <TestTube className="w-4 h-4 mr-1" />}
                 测试连接
               </Button>
-
-              {message && (
-                <div
-                  className={cn(
-                    "text-sm flex items-center gap-2",
-                    message.type === "success" ? "text-green-600" : "text-red-600"
-                  )}
-                >
-                  {message.type === "success" ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-                  {message.text}
-                </div>
-              )}
             </div>
           </div>
         )}
+
+        {/* Save button — always visible */}
+        <div className="flex items-center gap-3 pt-4 border-t">
+          <Button onClick={handleSave} disabled={isLoading} size="sm">
+            保存配置
+          </Button>
+          {message && (
+            <div
+              className={cn(
+                "text-sm flex items-center gap-2",
+                message.type === "success" ? "text-green-600" : "text-red-600"
+              )}
+            >
+              {message.type === "success" ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              {message.text}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
