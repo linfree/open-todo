@@ -3,6 +3,7 @@
 package ui
 
 import (
+	_ "embed"
 	"fmt"
 	"runtime"
 	"sync"
@@ -10,6 +11,9 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/jchv/go-webview2"
 )
+
+//go:embed icon.png
+var trayIcon []byte
 
 type windowsUI struct {
 	port    int
@@ -32,6 +36,7 @@ func (u *windowsUI) Run(onReady func()) {
 	systray.Run(func() {
 		systray.SetTitle("Open Todo")
 		systray.SetTooltip(fmt.Sprintf("Open Todo (localhost:%d)", u.port))
+		systray.SetIcon(trayIcon)
 
 		mShow := systray.AddMenuItem("显示窗口", "显示应用窗口")
 		mOpen := systray.AddMenuItem("在浏览器中打开", "在外部浏览器中打开")

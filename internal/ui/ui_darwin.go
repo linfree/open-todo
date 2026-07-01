@@ -3,8 +3,12 @@
 package ui
 
 import (
+	_ "embed"
 	"github.com/getlantern/systray"
 )
+
+//go:embed icon.png
+var trayIcon []byte
 
 type darwinUI struct {
 	port int
