@@ -231,28 +231,29 @@ func (s *AIService) chatCompletion(systemPrompt, userMessage string) (string, er
 func extractJSON(s string) string {
 	s = strings.TrimSpace(s)
 
-	// Strip text before the first { or [ (e.g., thinking chain output)
-	if idx := strings.Index(s, "{"); idx > 0 {
-		s = s[idx:]
-	}
-	// Also handle the case where JSON is preceded by text and then array
-	if idx := strings.Index(s, "["); idx > 0 && (strings.Index(s, "{") == -1 || idx < strings.Index(s, "{")) {
-		s = s[idx:]
-	}
+	// Strategy: find the LAST valid JSON object/array in the response.
+	// This handles models that output thinking chain text before the JSON.
 
-	// Try to extract from markdown code blocks: ```json ... ```
-	if strings.HasPrefix(s, "```") {
-		s = strings.TrimPrefix(s, "```json")
-		s = strings.TrimPrefix(s, "```")
-		if idx := strings.LastIndex(s, "```"); idx >= 0 {
-			s = s[:idx]
+	// First, try to find JSON inside markdown code blocks at the END of the response
+	if lastFence := strings.LastIndex(s, "```json"); lastFence >= 0 {
+		after := s[lastFence+7:] // skip ```json
+		if endFence := strings.Index(after, "```"); endFence >= 0 {
+			return strings.TrimSpace(after[:endFence])
 		}
-		return strings.TrimSpace(s)
+	}
+	if lastFence := strings.LastIndex(s, "```"); lastFence >= 0 {
+		after := s[lastFence+3:] // skip ```
+		if endFence := strings.Index(after, "```"); endFence >= 0 {
+			return strings.TrimSpace(after[:endFence])
+		}
 	}
 
-	// If there's trailing text after the last }, strip it
-	if lastBrace := strings.LastIndex(s, "}"); lastBrace >= 0 && lastBrace < len(s)-1 {
-		s = s[:lastBrace+1]
+	// No code blocks — find the last JSON object in the text
+	if lastBrace := strings.LastIndex(s, "}"); lastBrace >= 0 {
+		firstBrace := strings.LastIndex(s[:lastBrace], "{")
+		if firstBrace >= 0 {
+			return s[firstBrace : lastBrace+1]
+		}
 	}
 
 	return s
