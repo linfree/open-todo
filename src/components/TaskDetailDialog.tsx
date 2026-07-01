@@ -618,11 +618,15 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                       </Button>
                     </>
                   ) : (
-                    <>
+                    <button
+                      type="button"
+                      onClick={() => toggleSubTask(subTask.id)}
+                      className="flex items-center gap-2 cursor-pointer w-full text-left"
+                    >
                       {subTask.completed ? (
                         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
                       ) : (
-                        <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0 hover:text-green-500 transition-colors" />
                       )}
                       <span
                         className={cn(
@@ -632,7 +636,7 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
                       >
                         {subTask.title}
                       </span>
-                    </>
+                    </button>
                   )}
                 </div>
               ))}
