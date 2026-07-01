@@ -12,7 +12,7 @@ import (
 	"github.com/jchv/go-webview2"
 )
 
-//go:embed icon.png
+//go:embed icon.ico
 var trayIcon []byte
 
 type windowsUI struct {
