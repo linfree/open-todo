@@ -50,17 +50,30 @@ func (s *AIService) Status() (enabled bool, configured bool, model string) {
 	return s.cfg.Enabled, s.cfg.Enabled && s.cfg.APIKey != "", s.cfg.Model
 }
 
-// TestConnection tests the AI API connection by listing available models.
+// TestConnection tests the AI API connection by sending a minimal chat request.
 func (s *AIService) TestConnection() error {
 	if s.cfg.APIKey == "" {
 		return fmt.Errorf("API密钥未配置")
 	}
 
-	url := strings.TrimRight(s.cfg.BaseURL, "/") + "/models"
-	req, err := http.NewRequest("GET", url, nil)
+	type msg struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	body, _ := json.Marshal(map[string]interface{}{
+		"model": s.cfg.Model,
+		"messages": []msg{
+			{Role: "user", Content: "ping"},
+		},
+		"max_tokens": 1,
+	})
+
+	url := strings.TrimRight(s.cfg.BaseURL, "/") + "/chat/completions"
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("创建请求失败: %w", err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+s.cfg.APIKey)
 
 	client := &http.Client{Timeout: 15 * time.Second}
@@ -74,8 +87,8 @@ func (s *AIService) TestConnection() error {
 		return fmt.Errorf("API密钥无效 (状态码 %d)", resp.StatusCode)
 	}
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("API返回错误 (状态码 %d): %s", resp.StatusCode, string(body))
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API返回错误 (状态码 %d): %s", resp.StatusCode, string(respBody))
 	}
 
 	return nil
