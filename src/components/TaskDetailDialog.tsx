@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tag, Plus, Trash2, Bell, Sparkles, Loader2 } from "lucide-react";
+import { Tag, Plus, Trash2, Bell, Sparkles, Loader2, CheckCircle2, Circle } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus, Task, SubTask, Reminder, Tag as TagType } from "../types";
 import { Button } from "./ui/button";
@@ -10,6 +10,7 @@ import { Checkbox } from "./ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "./ui/dialog";
 import { ConfirmDialog } from "./ui/confirm-dialog";
 import { DatePicker } from "./ui/date-picker";
+import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
 import { useAIStatus } from "../lib/ai";
 import { TAG_COLORS } from "../lib/icons";
@@ -21,7 +22,9 @@ interface TaskDetailDialogProps {
 }
 
 export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProps) {
-  const { updateTask, permanentlyDeleteTask, categories, tags: storeTags, addTag } = useTodoStore();
+  const { updateTask, permanentlyDeleteTask, toggleTaskComplete, categories, tags: storeTags, addTag } = useTodoStore();
+
+  const [editing, setEditing] = useState(false);
 
   // 表单状态
   const [title, setTitle] = useState("");
@@ -47,7 +50,7 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
   const [aiBreakdownLoading, setAIBreakdownLoading] = useState(false);
   const [aiBreakdownError, setAIBreakdownError] = useState<string | null>(null);
 
-  // 初始化表单
+  // 初始化表单（任务变化或对话框打开时，重置为查看模式）
   useEffect(() => {
     if (task) {
       setTitle(task.title);
@@ -60,6 +63,7 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
       setSelectedTags(task.tags || []);
       setSubTasks(task.subTasks || []);
       setReminders(task.reminders || []);
+      setEditing(false);
     }
   }, [task]);
 
@@ -79,7 +83,23 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
       reminders,
     });
 
-    onClose();
+    setEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    if (!task) return;
+    // 丢弃修改，恢复到任务原始值
+    setTitle(task.title);
+    setDescription(task.description || "");
+    setPriority(task.priority);
+    setStatus(task.status);
+    setListId(task.listId);
+    setCategoryId(task.categoryId);
+    setDueDate(task.dueDate ? new Date(task.dueDate) : null);
+    setSelectedTags(task.tags || []);
+    setSubTasks(task.subTasks || []);
+    setReminders(task.reminders || []);
+    setEditing(false);
   };
 
   const toggleTag = (tag: TagType) => {
@@ -223,17 +243,66 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
     { value: TaskStatus.DONE, label: "已完成" },
   ];
 
+  const priorityBadgeVariant = (p: Priority): "outline" | "info" | "warning" | "destructive" => {
+    switch (p) {
+      case Priority.LOW: return "info";
+      case Priority.MEDIUM: return "warning";
+      case Priority.HIGH: return "destructive";
+      default: return "outline";
+    }
+  };
+
+  const priorityLabel = (p: Priority) => {
+    const opt = priorityOptions.find((o) => o.value === p);
+    return opt?.label ?? "无";
+  };
+
+  const statusBadgeVariant = (s: TaskStatus): "secondary" | "info" | "success" => {
+    switch (s) {
+      case TaskStatus.TODO: return "secondary";
+      case TaskStatus.IN_PROGRESS: return "info";
+      case TaskStatus.DONE: return "success";
+    }
+  };
+
+  const statusLabel = (s: TaskStatus) => {
+    const opt = statusOptions.find((o) => o.value === s);
+    return opt?.label ?? "待办";
+  };
+
+  const repeatLabel = (r: string) => {
+    switch (r) {
+      case "daily": return "每天";
+      case "weekly": return "每周";
+      case "monthly": return "每月";
+      case "yearly": return "每年";
+      default: return "不重复";
+    }
+  };
+
+  const formatDate = (d: Date | string) => {
+    const date = typeof d === "string" ? new Date(d) : d;
+    return date.toLocaleString("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   if (!task) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>任务详情</DialogTitle>
+          <DialogTitle>{editing ? "编辑任务" : "任务详情"}</DialogTitle>
         </DialogHeader>
 
         <DialogClose onClick={onClose} />
 
+        {/* 删除按钮（查看和编辑模式都显示） */}
         <Button
           variant="ghost"
           size="icon"
@@ -250,70 +319,104 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
         <div className="space-y-6">
           {/* 标题 */}
           <div>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="任务标题"
-              className="text-lg font-medium"
-            />
+            {editing ? (
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="任务标题"
+                className="text-lg font-medium"
+              />
+            ) : (
+              <h2 className="text-lg font-medium break-words">{title}</h2>
+            )}
           </div>
 
           {/* 描述 */}
           <div>
             <label className="text-sm font-medium mb-2 block">描述</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="添加描述..."
-              className="min-h-[100px]"
-            />
+            {editing ? (
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="添加描述..."
+                className="min-h-[100px]"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words min-h-[24px]">
+                {description || "暂无描述"}
+              </p>
+            )}
           </div>
 
           {/* 优先级和状态 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">优先级</label>
-              <Select value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
-                {priorityOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
+              {editing ? (
+                <Select value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+                  {priorityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Badge variant={priorityBadgeVariant(priority)}>
+                  {priorityLabel(priority)}
+                </Badge>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">状态</label>
-              <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
+              {editing ? (
+                <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Badge variant={statusBadgeVariant(status)}>
+                  {statusLabel(status)}
+                </Badge>
+              )}
             </div>
           </div>
 
           {/* 分类 */}
           <div>
             <label className="text-sm font-medium mb-2 block">分类</label>
-            <Select value={categoryId || "inbox"} onChange={(e) => setCategoryId(e.target.value)}>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </Select>
+            {editing ? (
+              <Select value={categoryId || "inbox"} onChange={(e) => setCategoryId(e.target.value)}>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <p className="text-sm">
+                {categories.find((c) => c.id === categoryId)?.name || "收件箱"}
+              </p>
+            )}
           </div>
 
           {/* 截止时间 */}
           <div>
             <label className="text-sm font-medium mb-2 block">截止时间</label>
-            <DatePicker
-              value={dueDate}
-              onChange={setDueDate}
-              placeholder="选择截止日期和时间"
-              showSeconds={true}
-            />
+            {editing ? (
+              <DatePicker
+                value={dueDate}
+                onChange={setDueDate}
+                placeholder="选择截止日期和时间"
+                showSeconds={true}
+              />
+            ) : (
+              <p className="text-sm">
+                {dueDate ? formatDate(dueDate) : "未设置"}
+              </p>
+            )}
           </div>
 
           {/* 标签 */}
@@ -322,74 +425,94 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
               <Tag className="w-4 h-4 text-current" />
               标签
             </label>
-            <div className="flex flex-wrap gap-2">
-              {storeTags.map((tag) => {
-                const isSelected = selectedTags.find((t) => t.id === tag.id);
-                return (
+            {editing ? (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {storeTags.map((tag) => {
+                    const isSelected = selectedTags.find((t) => t.id === tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-sm transition-colors",
+                          isSelected
+                            ? "text-white"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                        style={
+                          isSelected
+                            ? { backgroundColor: tag.color }
+                            : undefined
+                        }
+                      >
+                        {tag.name}
+                      </button>
+                    );
+                  })}
                   <button
-                    key={tag.id}
-                    onClick={() => toggleTag(tag)}
+                    onClick={() => setIsAddingTag(true)}
                     className={cn(
-                      "px-3 py-1 rounded-full text-sm transition-colors",
-                      isSelected
-                        ? "text-white"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      "px-3 py-1 rounded-full text-sm transition-colors border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50"
                     )}
-                    style={
-                      isSelected
-                        ? { backgroundColor: tag.color }
-                        : undefined
-                    }
                   >
-                    {tag.name}
+                    <Plus className="w-3 h-3 inline mr-1" />
+                    添加
                   </button>
-                );
-              })}
-              <button
-                onClick={() => setIsAddingTag(true)}
-                className={cn(
-                  "px-3 py-1 rounded-full text-sm transition-colors border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50"
+                </div>
+                {isAddingTag && (
+                  <div className="mt-2 flex gap-2">
+                    <Input
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      placeholder="输入标签名称..."
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      className="flex-1"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleAddTag}
+                      disabled={!newTagName.trim()}
+                    >
+                      <Plus className="w-4 h-4 text-current" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIsAddingTag(false);
+                        setNewTagName("");
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-current" />
+                    </Button>
+                  </div>
                 )}
-              >
-                <Plus className="w-3 h-3 inline mr-1" />
-                添加
-              </button>
-            </div>
-            {isAddingTag && (
-              <div className="mt-2 flex gap-2">
-                <Input
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  placeholder="输入标签名称..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleAddTag}
-                  disabled={!newTagName.trim()}
-                >
-                  <Plus className="w-4 h-4 text-current" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setIsAddingTag(false);
-                    setNewTagName("");
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 text-current" />
-                </Button>
+              </>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.length === 0 ? (
+                  <span className="text-sm text-muted-foreground">暂无标签</span>
+                ) : (
+                  selectedTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-3 py-1 rounded-full text-xs text-white"
+                      style={{ backgroundColor: tag.color }}
+                    >
+                      {tag.name}
+                    </span>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -420,55 +543,80 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
               <p className="text-xs text-red-500 mb-2">{aiBreakdownError}</p>
             )}
             <div className="space-y-2">
+              {subTasks.length === 0 && (
+                <p className="text-sm text-muted-foreground py-1">暂无子任务</p>
+              )}
               {subTasks.map((subTask) => (
                 <div
                   key={subTask.id}
                   className="flex items-center gap-2 p-2 rounded-lg bg-muted/50"
                 >
-                  <Checkbox
-                    checked={subTask.completed}
-                    onChange={() => toggleSubTask(subTask.id)}
-                  />
-                  <span
-                    className={cn(
-                      "flex-1 text-sm",
-                      subTask.completed && "line-through text-muted-foreground"
-                    )}
-                  >
-                    {subTask.title}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteSubTask(subTask.id)}
-                    className="h-8 w-8"
-                  >
-                    <Trash2 className="w-4 h-4 text-muted-foreground" />
-                  </Button>
+                  {editing ? (
+                    <>
+                      <Checkbox
+                        checked={subTask.completed}
+                        onChange={() => toggleSubTask(subTask.id)}
+                      />
+                      <span
+                        className={cn(
+                          "flex-1 text-sm",
+                          subTask.completed && "line-through text-muted-foreground"
+                        )}
+                      >
+                        {subTask.title}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteSubTask(subTask.id)}
+                        className="h-8 w-8"
+                      >
+                        <Trash2 className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {subTask.completed ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                      <span
+                        className={cn(
+                          "flex-1 text-sm",
+                          subTask.completed && "line-through text-muted-foreground"
+                        )}
+                      >
+                        {subTask.title}
+                      </span>
+                    </>
+                  )}
                 </div>
               ))}
-              <div className="flex gap-2">
-                <Input
-                  value={newSubTaskTitle}
-                  onChange={(e) => setNewSubTaskTitle(e.target.value)}
-                  placeholder="添加子任务..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addSubTask();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={addSubTask}
-                  disabled={!newSubTaskTitle.trim()}
-                >
-                  <Plus className="w-4 h-4 text-current" />
-                </Button>
-              </div>
+              {editing && (
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubTaskTitle}
+                    onChange={(e) => setNewSubTaskTitle(e.target.value)}
+                    placeholder="添加子任务..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSubTask();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={addSubTask}
+                    disabled={!newSubTaskTitle.trim()}
+                  >
+                    <Plus className="w-4 h-4 text-current" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -478,65 +626,100 @@ export function TaskDetailDialog({ task, isOpen, onClose }: TaskDetailDialogProp
               <Bell className="w-4 h-4 text-current" />
               提醒
             </label>
-            <div className="space-y-3">
-              {reminders.map((reminder) => (
-                <div
-                  key={reminder.id}
-                  className="flex items-center gap-2"
+            {editing ? (
+              <div className="space-y-3">
+                {reminders.map((reminder) => (
+                  <div
+                    key={reminder.id}
+                    className="flex items-center gap-2"
+                  >
+                    <DatePicker
+                      value={new Date(reminder.date)}
+                      onChange={(date) =>
+                        updateReminder(reminder.id, {
+                          date: date || new Date(),
+                        })
+                      }
+                      placeholder="选择提醒时间"
+                      className="flex-1"
+                      showSeconds={true}
+                    />
+                    <Select
+                      value={reminder.repeat}
+                      onChange={(e) =>
+                        updateReminder(reminder.id, {
+                          repeat: e.target.value as Reminder["repeat"],
+                        })
+                      }
+                      className="w-32"
+                    >
+                      <option value="none">不重复</option>
+                      <option value="daily">每天</option>
+                      <option value="weekly">每周</option>
+                      <option value="monthly">每月</option>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteReminder(reminder.id)}
+                      className="h-10 w-10 shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  onClick={addReminder}
                 >
-                  <DatePicker
-                    value={new Date(reminder.date)}
-                    onChange={(date) =>
-                      updateReminder(reminder.id, {
-                        date: date || new Date(),
-                      })
-                    }
-                    placeholder="选择提醒时间"
-                    className="flex-1"
-                    showSeconds={true}
-                  />
-                  <Select
-                    value={reminder.repeat}
-                    onChange={(e) =>
-                      updateReminder(reminder.id, {
-                        repeat: e.target.value as Reminder["repeat"],
-                      })
-                    }
-                    className="w-32"
-                  >
-                    <option value="none">不重复</option>
-                    <option value="daily">每天</option>
-                    <option value="weekly">每周</option>
-                    <option value="monthly">每月</option>
-                  </Select>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteReminder(reminder.id)}
-                    className="h-10 w-10 shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full rounded-xl"
-                onClick={addReminder}
-              >
-                <Plus className="w-4 h-4 mr-2 text-current" />
-                添加提醒
-              </Button>
-            </div>
+                  <Plus className="w-4 h-4 mr-2 text-current" />
+                  添加提醒
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {reminders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">暂无提醒</p>
+                ) : (
+                  reminders.map((reminder) => (
+                    <div
+                      key={reminder.id}
+                      className="flex items-center gap-2 text-sm p-2 rounded-lg bg-muted/50"
+                    >
+                      <Bell className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span>{formatDate(reminder.date)}</span>
+                      <span className="text-muted-foreground">
+                        {repeatLabel(reminder.repeat || "none")}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            取消
-          </Button>
-          <Button onClick={handleSave}>保存</Button>
+          {editing ? (
+            <>
+              <Button variant="outline" onClick={handleCancelEdit}>
+                取消
+              </Button>
+              <Button onClick={handleSave}>保存</Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => toggleTaskComplete(task.id)}
+              >
+                {task.completed ? "取消完成" : "完成"}
+              </Button>
+              <Button onClick={() => setEditing(true)}>编辑</Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
 
