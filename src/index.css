@@ -125,6 +125,7 @@
   }
 }
 
+@layer components {
   /* 移动端优化的滚动容器 */
   .scroll-container {
     -webkit-overflow-scrolling: touch;
