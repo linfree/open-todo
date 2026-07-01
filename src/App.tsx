@@ -15,7 +15,6 @@ import { TaskFilterSidebar } from "./components/TaskFilterSidebar";
 import { TopTabBar } from "./components/TopTabBar";
 import { SortableTaskItem } from "./components/SortableTaskItem";
 import { AddTaskDialog } from "./components/AddTaskDialog";
-import { AITaskInput } from "./components/AITaskInput";
 import { cn } from "./lib/utils";
 import "./index.css";
 import {
@@ -260,7 +259,6 @@ function App() {
             {/* AI 任务输入 - 仅在任务视图显示 */}
             {mainView === MainView.TASK && (
               <div className="mt-3">
-                <AITaskInput />
               </div>
             )}
           </div>

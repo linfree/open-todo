@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calendar } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Sparkles, Loader2 } from "lucide-react";
 import { useTodoStore } from "../store/todoStore";
 import { Priority, TaskStatus } from "../types";
 import { Button } from "./ui/button";
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "./ui/dialog";
+import { useAIStatus } from "../lib/ai";
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -20,25 +21,95 @@ interface AddTaskDialogProps {
 
 export function AddTaskDialog({ isOpen, onClose, dueDate }: AddTaskDialogProps) {
   const [title, setTitle] = useState("");
+  const [useAI, setUseAI] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const { addTask, currentListId, currentCategoryId } = useTodoStore();
+  const { configured } = useAIStatus();
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (isOpen) {
+      setUseAI(configured);
+    }
+  }, [isOpen, configured]);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
 
-    addTask({
-      title: title.trim(),
-      completed: false,
-      priority: Priority.NONE,
-      status: TaskStatus.TODO,
-      listId: currentListId || "all",
-      categoryId: currentCategoryId || undefined,
-      tags: [],
-      subTasks: [],
-      reminders: [],
-      order: 0,
-      dueDate: dueDate,
-    });
+    if (useAI && configured) {
+      setAiLoading(true);
+      try {
+        const res = await fetch("/api/v1/ai/parse-task", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: title.trim() }),
+        });
+        if (res.ok) {
+          const parsed = await res.json();
+          addTask({
+            title: parsed.title || title.trim(),
+            description: parsed.description || undefined,
+            completed: false,
+            priority: (parsed.priority as Priority) || Priority.NONE,
+            status: TaskStatus.TODO,
+            listId: currentListId || "all",
+            categoryId: currentCategoryId || undefined,
+            tags: [],
+            subTasks: [],
+            reminders: parsed.reminder
+              ? [{ id: crypto.randomUUID(), date: new Date(parsed.reminder), repeat: "none" as const, enabled: true }]
+              : [],
+            order: 0,
+            dueDate: parsed.dueDate ? new Date(parsed.dueDate) : dueDate,
+          });
+        } else {
+          // AI 失败，正常创建
+          addTask({
+            title: title.trim(),
+            completed: false,
+            priority: Priority.NONE,
+            status: TaskStatus.TODO,
+            listId: currentListId || "all",
+            categoryId: currentCategoryId || undefined,
+            tags: [],
+            subTasks: [],
+            reminders: [],
+            order: 0,
+            dueDate: dueDate,
+          });
+        }
+      } catch {
+        addTask({
+          title: title.trim(),
+          completed: false,
+          priority: Priority.NONE,
+          status: TaskStatus.TODO,
+          listId: currentListId || "all",
+          categoryId: currentCategoryId || undefined,
+          tags: [],
+          subTasks: [],
+          reminders: [],
+          order: 0,
+          dueDate: dueDate,
+        });
+      } finally {
+        setAiLoading(false);
+      }
+    } else {
+      addTask({
+        title: title.trim(),
+        completed: false,
+        priority: Priority.NONE,
+        status: TaskStatus.TODO,
+        listId: currentListId || "all",
+        categoryId: currentCategoryId || undefined,
+        tags: [],
+        subTasks: [],
+        reminders: [],
+        order: 0,
+        dueDate: dueDate,
+      });
+    }
     setTitle("");
     onClose();
   }
@@ -54,9 +125,10 @@ export function AddTaskDialog({ isOpen, onClose, dueDate }: AddTaskDialogProps) 
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="准备做什么？"
+              placeholder={aiLoading ? "AI 正在解析..." : useAI ? "用自然语言描述任务，如：明天下午3点提醒我开会" : "准备做什么？"}
               className="text-base"
               autoFocus
+              disabled={aiLoading}
             />
             {dueDate && (
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -64,12 +136,27 @@ export function AddTaskDialog({ isOpen, onClose, dueDate }: AddTaskDialogProps) 
                 <span>截止日期：{dueDate.toLocaleDateString("zh-CN")}</span>
               </div>
             )}
+            {configured && (
+              <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useAI}
+                  onChange={(e) => setUseAI(e.target.checked)}
+                  className="w-4 h-4 rounded accent-primary"
+                />
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>AI 创建</span>
+                {aiLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              </label>
+            )}
           </div>
           <DialogFooter className="mt-2">
             <Button type="button" variant="ghost" onClick={onClose} className="cursor-pointer">
               取消
             </Button>
-            <Button type="submit">添加</Button>
+            <Button type="submit" disabled={aiLoading}>
+              {aiLoading ? "解析中..." : "添加"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
